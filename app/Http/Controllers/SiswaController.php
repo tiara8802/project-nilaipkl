@@ -3,20 +3,91 @@
 namespace App\Http\Controllers;
 
 use App\Models\Siswa;
-use App\Models\NilaiPkl;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SiswaController extends Controller
 {
-    // ========== CRUD SISWA ========== //
-    public function index()
+    // Helper method untuk cek auth
+    private function checkAuth()
     {
-        $siswas = Siswa::orderBy('nama')->paginate(10);
-        return view('siswa.index', compact('siswas'));
+        if (!Auth::guard('guru')->check()) {
+            return redirect()->route('login');
+        }
+        return null;
     }
 
+    // Daftar semua siswa
+    public function index(Request $request)
+    {
+        if ($redirect = $this->checkAuth()) return $redirect;
+        
+        $query = Siswa::query();
+        
+        // Filter pencarian
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%")
+                  ->orWhere('tempat_pkl', 'like', "%{$search}%")
+                  ->orWhere('paket_keahlian', 'like', "%{$search}%");
+            });
+        }
+        
+        // Filter paket keahlian
+        if ($request->filled('paket_keahlian')) {
+            $query->where('paket_keahlian', $request->paket_keahlian);
+        }
+        
+        // Filter status PKL
+        if ($request->filled('status')) {
+            $status = $request->status;
+            $today = now();
+            
+            switch ($status) {
+                case 'active':
+                    $query->where('status_pkl', 'Sedang PKL')
+                          ->orWhere(function($q) use ($today) {
+                              $q->whereDate('tanggal_mulai_pkl', '<=', $today)
+                                ->whereDate('tanggal_selesai_pkl', '>=', $today);
+                          });
+                    break;
+                case 'completed':
+                    $query->where('status_pkl', 'Selesai PKL')
+                          ->orWhereDate('tanggal_selesai_pkl', '<', $today);
+                    break;
+                case 'upcoming':
+                    $query->where('status_pkl', 'Belum PKL')
+                          ->orWhereDate('tanggal_mulai_pkl', '>', $today);
+                    break;
+            }
+        }
+        
+        $siswas = $query->orderBy('nama')->paginate(10);
+        
+        // Daftar paket keahlian untuk filter
+        $paketKeahlian = [
+            'Teknik Komputer dan Jaringan (TKJ)',
+            'Rekayasa Perangkat Lunak (RPL)',
+            'Multimedia',
+            'Akuntansi',
+            'Administrasi Perkantoran',
+            'Pemasaran',
+            'Tata Boga',
+            'Tata Busana',
+            'Teknik Kendaraan Ringan (TKR)',
+            'Teknik dan Bisnis Sepeda Motor (TBSM)',
+        ];
+        
+        return view('siswa.index', compact('siswas', 'paketKeahlian'));
+    }
+
+    // Form tambah siswa
     public function create()
     {
+        if ($redirect = $this->checkAuth()) return $redirect;
+        
         $paketKeahlian = [
             'Teknik Komputer dan Jaringan (TKJ)',
             'Rekayasa Perangkat Lunak (RPL)',
@@ -33,47 +104,82 @@ class SiswaController extends Controller
         return view('siswa.create', compact('paketKeahlian'));
     }
 
+    // Simpan data siswa
     public function store(Request $request)
     {
+        if ($redirect = $this->checkAuth()) return $redirect;
+        
         $request->validate([
             'nama' => 'required|string|max:255',
+            'nis' => 'required|string|max:20|unique:siswas,nis',
             'tempat_lahir' => 'required|string|max:100',
             'tanggal_lahir' => 'required|date',
-            'nis' => 'required|string|unique:siswas|max:20',
             'paket_keahlian' => 'required|string|max:100',
-            'tanggal_mulai_pkl' => 'required|date',
-            'tanggal_selesai_pkl' => 'required|date|after_or_equal:tanggal_mulai_pkl',
-            'tempat_pkl' => 'required|string|max:255',
+            'asal_lembaga' => 'nullable|string|max:255',
+            'tempat_pkl' => 'nullable|string|max:255',
             'alamat_pkl' => 'nullable|string',
             'telepon_pkl' => 'nullable|string|max:20',
+            'tanggal_mulai_pkl' => 'nullable|date',
+            'tanggal_selesai_pkl' => 'nullable|date|after_or_equal:tanggal_mulai_pkl',
+            'nama_pembimbing' => 'nullable|string|max:255',
+            'jabatan_pembimbing' => 'nullable|string|max:100',
+            'telepon_pembimbing' => 'nullable|string|max:20',
         ]);
-
-        Siswa::create([
+        
+        // Tentukan status PKL berdasarkan tanggal
+        $statusPkl = 'Belum PKL';
+        if ($request->tanggal_mulai_pkl && $request->tanggal_selesai_pkl) {
+            $today = now();
+            $mulai = \Carbon\Carbon::parse($request->tanggal_mulai_pkl);
+            $selesai = \Carbon\Carbon::parse($request->tanggal_selesai_pkl);
+            
+            if ($today->between($mulai, $selesai)) {
+                $statusPkl = 'Sedang PKL';
+            } elseif ($today->gt($selesai)) {
+                $statusPkl = 'Selesai PKL';
+            }
+        }
+        
+        $siswa = Siswa::create([
             'nama' => $request->nama,
+            'nis' => $request->nis,
             'tempat_lahir' => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
-            'nis' => $request->nis,
             'paket_keahlian' => $request->paket_keahlian,
-            'asal_lembaga' => 'SMK NEGERI 1 KOTA CIREBON',
-            'tanggal_mulai_pkl' => $request->tanggal_mulai_pkl,
-            'tanggal_selesai_pkl' => $request->tanggal_selesai_pkl,
+            'asal_lembaga' => $request->asal_lembaga ?? 'SMK NEGERI 1 KOTA CIREBON',
             'tempat_pkl' => $request->tempat_pkl,
             'alamat_pkl' => $request->alamat_pkl,
             'telepon_pkl' => $request->telepon_pkl,
+            'tanggal_mulai_pkl' => $request->tanggal_mulai_pkl,
+            'tanggal_selesai_pkl' => $request->tanggal_selesai_pkl,
+            'status_pkl' => $statusPkl,
+            'nama_pembimbing' => $request->nama_pembimbing,
+            'jabatan_pembimbing' => $request->jabatan_pembimbing,
+            'telepon_pembimbing' => $request->telepon_pembimbing,
+            'created_by' => Auth::guard('guru')->id(),
         ]);
-
-        return redirect()->route('siswa.index')->with('success', 'Siswa berhasil ditambahkan!');
+        
+        return redirect()->route('siswa.index')
+            ->with('success', 'Data siswa berhasil ditambahkan!');
     }
 
+    // Tampilkan detail siswa
     public function show($id)
     {
-        $siswa = Siswa::with('nilaiPkls')->findOrFail($id);
+        if ($redirect = $this->checkAuth()) return $redirect;
+        
+        $siswa = Siswa::with('nilaiPkl')->findOrFail($id);
+        
         return view('siswa.show', compact('siswa'));
     }
 
+    // Form edit siswa
     public function edit($id)
     {
+        if ($redirect = $this->checkAuth()) return $redirect;
+        
         $siswa = Siswa::findOrFail($id);
+        
         $paketKeahlian = [
             'Teknik Komputer dan Jaringan (TKJ)',
             'Rekayasa Perangkat Lunak (RPL)',
@@ -90,222 +196,104 @@ class SiswaController extends Controller
         return view('siswa.edit', compact('siswa', 'paketKeahlian'));
     }
 
+    // Update data siswa
     public function update(Request $request, $id)
     {
+        if ($redirect = $this->checkAuth()) return $redirect;
+        
         $siswa = Siswa::findOrFail($id);
         
         $request->validate([
             'nama' => 'required|string|max:255',
+            'nis' => 'required|string|max:20|unique:siswas,nis,' . $id,
             'tempat_lahir' => 'required|string|max:100',
             'tanggal_lahir' => 'required|date',
-            'nis' => 'required|string|unique:siswas,nis,' . $id . '|max:20',
             'paket_keahlian' => 'required|string|max:100',
-            'tanggal_mulai_pkl' => 'required|date',
-            'tanggal_selesai_pkl' => 'required|date|after_or_equal:tanggal_mulai_pkl',
-            'tempat_pkl' => 'required|string|max:255',
+            'asal_lembaga' => 'nullable|string|max:255',
+            'tempat_pkl' => 'nullable|string|max:255',
             'alamat_pkl' => 'nullable|string',
             'telepon_pkl' => 'nullable|string|max:20',
+            'tanggal_mulai_pkl' => 'nullable|date',
+            'tanggal_selesai_pkl' => 'nullable|date|after_or_equal:tanggal_mulai_pkl',
+            'nama_pembimbing' => 'nullable|string|max:255',
+            'jabatan_pembimbing' => 'nullable|string|max:100',
+            'telepon_pembimbing' => 'nullable|string|max:20',
         ]);
-
-        $siswa->update($request->all());
-        return redirect()->route('siswa.index')->with('success', 'Siswa berhasil diperbarui!');
+        
+        // Tentukan status PKL berdasarkan tanggal
+        $statusPkl = 'Belum PKL';
+        if ($request->tanggal_mulai_pkl && $request->tanggal_selesai_pkl) {
+            $today = now();
+            $mulai = \Carbon\Carbon::parse($request->tanggal_mulai_pkl);
+            $selesai = \Carbon\Carbon::parse($request->tanggal_selesai_pkl);
+            
+            if ($today->between($mulai, $selesai)) {
+                $statusPkl = 'Sedang PKL';
+            } elseif ($today->gt($selesai)) {
+                $statusPkl = 'Selesai PKL';
+            }
+        }
+        
+        $siswa->update([
+            'nama' => $request->nama,
+            'nis' => $request->nis,
+            'tempat_lahir' => $request->tempat_lahir,
+            'tanggal_lahir' => $request->tanggal_lahir,
+            'paket_keahlian' => $request->paket_keahlian,
+            'asal_lembaga' => $request->asal_lembaga ?? 'SMK NEGERI 1 KOTA CIREBON',
+            'tempat_pkl' => $request->tempat_pkl,
+            'alamat_pkl' => $request->alamat_pkl,
+            'telepon_pkl' => $request->telepon_pkl,
+            'tanggal_mulai_pkl' => $request->tanggal_mulai_pkl,
+            'tanggal_selesai_pkl' => $request->tanggal_selesai_pkl,
+            'status_pkl' => $statusPkl,
+            'nama_pembimbing' => $request->nama_pembimbing,
+            'jabatan_pembimbing' => $request->jabatan_pembimbing,
+            'telepon_pembimbing' => $request->telepon_pembimbing,
+            'updated_by' => Auth::guard('guru')->id(),
+        ]);
+        
+        return redirect()->route('siswa.index')
+            ->with('success', 'Data siswa berhasil diperbarui!');
     }
 
+    // Hapus data siswa
     public function destroy($id)
     {
+        if ($redirect = $this->checkAuth()) return $redirect;
+        
         $siswa = Siswa::findOrFail($id);
         
-        if ($siswa->nilaiPkls()->exists()) {
-            return back()->with('error', 'Tidak bisa hapus siswa yang sudah punya nilai!');
+        // Cek apakah siswa memiliki nilai PKL
+        if ($siswa->nilaiPkl) {
+            return redirect()->route('siswa.index')
+                ->with('error', 'Tidak dapat menghapus siswa yang sudah memiliki nilai PKL!');
         }
         
         $siswa->delete();
-        return back()->with('success', 'Siswa berhasil dihapus!');
+        
+        return redirect()->route('siswa.index')
+            ->with('success', 'Data siswa berhasil dihapus!');
     }
 
-    // ========== CRUD NILAI PKL (10 ASPEK SESUAI FOTO) ========== //
-    public function createNilai($siswaId)
+    // API untuk mendapatkan data siswa berdasarkan NIS (untuk select2)
+    public function getByNis(Request $request)
     {
-        $siswa = Siswa::findOrFail($siswaId);
-        return view('nilai.create', compact('siswa'));
-    }
-
-    public function storeNilai(Request $request, $siswaId)
-    {
-        $request->validate([
-            // 10 ASPEK NILAI (0-100)
-            'disiplin' => 'required|integer|min:0|max:100',
-            'tanggung_jawab' => 'required|integer|min:0|max:100',
-            'inisiatif' => 'required|integer|min:0|max:100',
-            'loyalitas' => 'required|integer|min:0|max:100',
-            'kerjasama' => 'required|integer|min:0|max:100',
-            'pengambilan_keputusan' => 'required|integer|min:0|max:100',
-            'jiwa_entrepreneur' => 'required|integer|min:0|max:100',
-            'kejujuran' => 'required|integer|min:0|max:100',
-            'kemampuan_bekerja' => 'required|integer|min:0|max:100',
-            'hasil_kerja' => 'required|integer|min:0|max:100',
+        if ($request->ajax()) {
+            $search = $request->get('search');
             
-            // DATA SURAT
-            'no_surat' => 'required|string',
-            'tanggal_surat' => 'required|date',
-            'pembimbing' => 'required|string',
-            'direktur' => 'required|string',
-        ]);
-
-        // HITUNG OTOMATIS
-        $jumlah_nilai = $request->disiplin + $request->tanggung_jawab + $request->inisiatif + 
-                       $request->loyalitas + $request->kerjasama + $request->pengambilan_keputusan + 
-                       $request->jiwa_entrepreneur + $request->kejujuran + $request->kemampuan_bekerja + 
-                       $request->hasil_kerja;
-        
-        $rata_rata = $jumlah_nilai / 10;
-        
-        // KONVERSI HURUF
-        if ($rata_rata >= 86) $huruf = 'A';
-        elseif ($rata_rata >= 71) $huruf = 'B';
-        elseif ($rata_rata >= 56) $huruf = 'C';
-        elseif ($rata_rata >= 41) $huruf = 'D';
-        else $huruf = 'E';
-
-        NilaiPkl::create([
-            'siswa_id' => $siswaId,
-            'guru_id' => auth()->id(), // guru yang login
+            $siswas = Siswa::where('nis', 'like', "%{$search}%")
+                ->orWhere('nama', 'like', "%{$search}%")
+                ->limit(10)
+                ->get()
+                ->map(function ($siswa) {
+                    return [
+                        'id' => $siswa->id,
+                        'text' => $siswa->nis . ' - ' . $siswa->nama . ' (' . $siswa->paket_keahlian . ')'
+                    ];
+                });
             
-            // 10 ASPEK NILAI
-            'disiplin' => $request->disiplin,
-            'tanggung_jawab' => $request->tanggung_jawab,
-            'inisiatif' => $request->inisiatif,
-            'loyalitas' => $request->loyalitas,
-            'kerjasama' => $request->kerjasama,
-            'pengambilan_keputusan' => $request->pengambilan_keputusan,
-            'jiwa_entrepreneur' => $request->jiwa_entrepreneur,
-            'kejujuran' => $request->kejujuran,
-            'kemampuan_bekerja' => $request->kemampuan_bekerja,
-            'hasil_kerja' => $request->hasil_kerja,
-            
-            // DATA SURAT
-            'no_surat' => $request->no_surat,
-            'tanggal_surat' => $request->tanggal_surat,
-            'pembimbing' => $request->pembimbing,
-            'direktur' => $request->direktur,
-            
-            // OTOMATIS
-            'jumlah_nilai' => $jumlah_nilai,
-            'rata_rata' => $rata_rata,
-            'huruf_rata_rata' => $huruf,
-        ]);
-
-        return redirect()->route('siswa.show', $siswaId)->with('success', 'Nilai berhasil disimpan!');
-    }
-
-    public function editNilai($siswaId, $nilaiId)
-    {
-        $siswa = Siswa::findOrFail($siswaId);
-        $nilai = NilaiPkl::where('id', $nilaiId)
-                        ->where('siswa_id', $siswaId)
-                        ->firstOrFail();
-        
-        return view('nilai.edit', compact('siswa', 'nilai'));
-    }
-
-    public function updateNilai(Request $request, $siswaId, $nilaiId)
-    {
-        $nilai = NilaiPkl::where('id', $nilaiId)
-                        ->where('siswa_id', $siswaId)
-                        ->firstOrFail();
-
-        $request->validate([
-            // 10 ASPEK NILAI
-            'disiplin' => 'required|integer|min:0|max:100',
-            'tanggung_jawab' => 'required|integer|min:0|max:100',
-            'inisiatif' => 'required|integer|min:0|max:100',
-            'loyalitas' => 'required|integer|min:0|max:100',
-            'kerjasama' => 'required|integer|min:0|max:100',
-            'pengambilan_keputusan' => 'required|integer|min:0|max:100',
-            'jiwa_entrepreneur' => 'required|integer|min:0|max:100',
-            'kejujuran' => 'required|integer|min:0|max:100',
-            'kemampuan_bekerja' => 'required|integer|min:0|max:100',
-            'hasil_kerja' => 'required|integer|min:0|max:100',
-            
-            // DATA SURAT
-            'no_surat' => 'required|string',
-            'tanggal_surat' => 'required|date',
-            'pembimbing' => 'required|string',
-            'direktur' => 'required|string',
-        ]);
-
-        // HITUNG ULANG
-        $jumlah_nilai = $request->disiplin + $request->tanggung_jawab + $request->inisiatif + 
-                       $request->loyalitas + $request->kerjasama + $request->pengambilan_keputusan + 
-                       $request->jiwa_entrepreneur + $request->kejujuran + $request->kemampuan_bekerja + 
-                       $request->hasil_kerja;
-        
-        $rata_rata = $jumlah_nilai / 10;
-        
-        if ($rata_rata >= 86) $huruf = 'A';
-        elseif ($rata_rata >= 71) $huruf = 'B';
-        elseif ($rata_rata >= 56) $huruf = 'C';
-        elseif ($rata_rata >= 41) $huruf = 'D';
-        else $huruf = 'E';
-
-        $nilai->update([
-            // 10 ASPEK
-            'disiplin' => $request->disiplin,
-            'tanggung_jawab' => $request->tanggung_jawab,
-            'inisiatif' => $request->inisiatif,
-            'loyalitas' => $request->loyalitas,
-            'kerjasama' => $request->kerjasama,
-            'pengambilan_keputusan' => $request->pengambilan_keputusan,
-            'jiwa_entrepreneur' => $request->jiwa_entrepreneur,
-            'kejujuran' => $request->kejujuran,
-            'kemampuan_bekerja' => $request->kemampuan_bekerja,
-            'hasil_kerja' => $request->hasil_kerja,
-            
-            // SURAT
-            'no_surat' => $request->no_surat,
-            'tanggal_surat' => $request->tanggal_surat,
-            'pembimbing' => $request->pembimbing,
-            'direktur' => $request->direktur,
-            
-            // OTOMATIS
-            'jumlah_nilai' => $jumlah_nilai,
-            'rata_rata' => $rata_rata,
-            'huruf_rata_rata' => $huruf,
-        ]);
-
-        return redirect()->route('siswa.show', $siswaId)->with('success', 'Nilai berhasil diperbarui!');
-    }
-
-    public function destroyNilai($siswaId, $nilaiId)
-    {
-        $nilai = NilaiPkl::where('id', $nilaiId)
-                        ->where('siswa_id', $siswaId)
-                        ->firstOrFail();
-        
-        $nilai->delete();
-        return back()->with('success', 'Nilai berhasil dihapus!');
-    }
-
-    public function cetakNilai($siswaId, $nilaiId)
-    {
-        $siswa = Siswa::findOrFail($siswaId);
-        $nilai = NilaiPkl::where('id', $nilaiId)
-                        ->where('siswa_id', $siswaId)
-                        ->firstOrFail();
-        
-        // FUNGSI KONVERSI
-        $konversiHuruf = function($nilai) {
-            if ($nilai >= 86) return 'A';
-            if ($nilai >= 71) return 'B';
-            if ($nilai >= 56) return 'C';
-            if ($nilai >= 41) return 'D';
-            return 'E';
-        };
-        
-        $verifikasi = function($nilai) {
-            return $nilai >= 56 ? 'Lulus' : 'Tidak Lulus';
-        };
-        
-        return view('nilai.cetak', compact('siswa', 'nilai', 'konversiHuruf', 'verifikasi'));
+            return response()->json(['results' => $siswas]);
+        }
     }
 }

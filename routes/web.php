@@ -4,55 +4,49 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\NilaiPklController;
+use App\Http\Controllers\GuruLoginController;
 
-// SIMPLE AUTH (tanpa controller terpisah)
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// ========== PUBLIC ROUTES ==========
+Route::get('/login', [GuruLoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [GuruLoginController::class, 'login'])->name('login.process');
 
-Route::post('/login', function (\Illuminate\Http\Request $request) {
-    $credentials = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
-
-    if (\Illuminate\Support\Facades\Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect()->route('dashboard');
-    }
-
-    return back()->withErrors(['email' => 'Email atau password salah.']);
+// ========== PROTECTED ROUTES ==========
+Route::middleware(['auth:guru'])->group(function () {
+    
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/logout', [GuruLoginController::class, 'logout'])->name('logout');
+    
+    // ===== SISWA CRUD =====
+    Route::prefix('siswa')->name('siswa.')->group(function () {
+        Route::get('/', [SiswaController::class, 'index'])->name('index');
+        Route::get('/create', [SiswaController::class, 'create'])->name('create');
+        Route::post('/', [SiswaController::class, 'store'])->name('store');
+        Route::get('/{siswa}', [SiswaController::class, 'show'])->name('show');
+        Route::get('/{siswa}/edit', [SiswaController::class, 'edit'])->name('edit');
+        Route::put('/{siswa}', [SiswaController::class, 'update'])->name('update');
+        Route::delete('/{siswa}', [SiswaController::class, 'destroy'])->name('destroy');
+    });
+    
+  // ===== NILAI PKL CRUD =====
+    Route::prefix('nilai-pkl')->name('nilai-pkl.')->group(function () {
+        Route::get('/', [NilaiPklController::class, 'index'])->name('index');
+        
+        // 🔴 SATU ROUTE UNTUK DUA FUNGSI!
+        Route::get('/create', [NilaiPklController::class, 'create'])->name('create');
+        
+        Route::post('/', [NilaiPklController::class, 'store'])->name('store');
+        Route::get('/{nilaiPkl}', [NilaiPklController::class, 'show'])->name('show');
+        Route::get('/{nilaiPkl}/edit', [NilaiPklController::class, 'edit'])->name('edit');
+        Route::put('/{nilaiPkl}', [NilaiPklController::class, 'update'])->name('update');
+        Route::delete('/{nilaiPkl}', [NilaiPklController::class, 'destroy'])->name('destroy');
+        Route::get('/{nilaiPkl}/cetak', [NilaiPklController::class, 'cetak'])->name('cetak');
+    });
 });
 
-Route::post('/logout', function (\Illuminate\Http\Request $request) {
-    \Illuminate\Support\Facades\Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/');
-})->name('logout');
-
-// TANPA MIDDLEWARE GROUP - Controller handle auth sendiri
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-Route::get('/siswa', [SiswaController::class, 'index'])->name('siswa.index');
-Route::get('/siswa/create', [SiswaController::class, 'create'])->name('siswa.create');
-Route::post('/siswa', [SiswaController::class, 'store'])->name('siswa.store');
-Route::get('/siswa/{id}', [SiswaController::class, 'show'])->name('siswa.show');
-Route::get('/siswa/{id}/edit', [SiswaController::class, 'edit'])->name('siswa.edit');
-Route::put('/siswa/{id}', [SiswaController::class, 'update'])->name('siswa.update');
-Route::delete('/siswa/{id}', [SiswaController::class, 'destroy'])->name('siswa.destroy');
-
-// Nilai PKL Routes
-Route::get('/nilai-pkl', [NilaiPklController::class, 'index'])->name('nilai-pkl.index');
-Route::get('/nilai-pkl/create', [NilaiPklController::class, 'create'])->name('nilai-pkl.create');
-Route::post('/nilai-pkl', [NilaiPklController::class, 'store'])->name('nilai-pkl.store');
-Route::get('/nilai-pkl/{id}', [NilaiPklController::class, 'show'])->name('nilai-pkl.show');
-Route::get('/nilai-pkl/{id}/edit', [NilaiPklController::class, 'edit'])->name('nilai-pkl.edit');
-Route::put('/nilai-pkl/{id}', [NilaiPklController::class, 'update'])->name('nilai-pkl.update');
-Route::delete('/nilai-pkl/{id}', [NilaiPklController::class, 'destroy'])->name('nilai-pkl.destroy');
-Route::get('/nilai-pkl/{id}/cetak', [NilaiPklController::class, 'cetak'])->name('nilai-pkl.cetak');
-Route::post('/nilai-pkl/{id}/verifikasi', [NilaiPklController::class, 'verifikasi'])->name('nilai-pkl.verifikasi');
-
-// Redirect root
+// ========== ROOT REDIRECT ==========
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    if (auth()->guard('guru')->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
 });

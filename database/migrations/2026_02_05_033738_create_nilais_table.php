@@ -1,11 +1,10 @@
-// database/migrations/xxxx_xx_xx_create_nilai_pkls_table.php
 <?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateNilaiPklsTable extends Migration
 {
     public function up()
     {
@@ -14,28 +13,28 @@ return new class extends Migration
             $table->foreignId('siswa_id')->constrained()->onDelete('cascade');
             $table->foreignId('guru_id')->constrained('users')->onDelete('cascade');
             
-            // 10 ASPEK NILAI (1-100)
-            $table->integer('disiplin')->default(0);
-            $table->integer('tanggung_jawab')->default(0);
-            $table->integer('inisiatif')->default(0);
-            $table->integer('loyalitas')->default(0);
-            $table->integer('kerjasama')->default(0);
-            $table->integer('pengambilan_keputusan')->default(0);
-            $table->integer('jiwa_entrepreneur')->default(0);
-            $table->integer('kejujuran')->default(0);
-            $table->integer('kemampuan_bekerja')->default(0);
-            $table->integer('hasil_kerja')->default(0);
-            
-            // DATA SURAT
-            $table->string('no_surat')->nullable();
+            // Data surat
+            $table->string('no_surat', 100);
             $table->date('tanggal_surat');
-            $table->string('pembimbing');
-            $table->string('direktur');
+            $table->string('pembimbing', 255);
+            $table->string('direktur', 255);
             
-            // OTOMATIS
-            $table->integer('jumlah_nilai')->default(0);
-            $table->float('rata_rata')->default(0);
-            $table->string('huruf_rata_rata')->nullable();
+            // Nilai-nilai
+            $table->integer('disiplin');
+            $table->integer('tanggung_jawab');
+            $table->integer('inisiatif');
+            $table->integer('loyalitas');
+            $table->integer('kerjasama');
+            $table->integer('pengambilan_keputusan');
+            $table->integer('jiwa_entrepreneur');
+            $table->integer('kejujuran');
+            $table->integer('kemampuan_bekerja');
+            $table->integer('hasil_kerja');
+            
+            // Nilai otomatis
+            $table->integer('jumlah_nilai')->nullable();
+            $table->decimal('rata_rata', 5, 2)->nullable();
+            $table->string('huruf_rata_rata', 1)->nullable();
             
             $table->timestamps();
         });
@@ -45,4 +44,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('nilai_pkls');
     }
-};
+}

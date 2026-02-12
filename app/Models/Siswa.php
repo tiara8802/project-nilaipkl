@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Siswa extends Model
 {
@@ -11,17 +12,22 @@ class Siswa extends Model
 
     protected $fillable = [
         'nama',
+        'nis',
         'tempat_lahir',
         'tanggal_lahir',
-        'nis',
         'paket_keahlian',
         'asal_lembaga',
-        'tanggal_mulai_pkl',
-        'tanggal_selesai_pkl',
         'tempat_pkl',
         'alamat_pkl',
         'telepon_pkl',
-        'keterangan',
+        'tanggal_mulai_pkl',
+        'tanggal_selesai_pkl',
+        'status_pkl',
+        'nama_pembimbing',
+        'jabatan_pembimbing',
+        'telepon_pembimbing',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
@@ -30,13 +36,57 @@ class Siswa extends Model
         'tanggal_selesai_pkl' => 'date',
     ];
 
-    public function nilaiPkls()
+    public function nilaiPkl(): HasOne
     {
-        return $this->hasMany(NilaiPkl::class);
+        return $this->hasOne(NilaiPkl::class);
     }
 
-    public function getTtlAttribute()
+    // Method untuk cek apakah siswa sudah memiliki nilai PKL
+    public function sudahMemilikiNilaiPkl(): bool
     {
-        return $this->tempat_lahir . ', ' . $this->tanggal_lahir->format('d-m-Y');
+        return $this->nilaiPkl()->exists();
+    }
+
+    // Method untuk mendapatkan status PKL
+    public function getStatusPklAttribute(): string
+    {
+        $today = now();
+        $start = $this->tanggal_mulai_pkl;
+        $end = $this->tanggal_selesai_pkl;
+
+        if (!$start || !$end) {
+            return 'Belum PKL';
+        }
+
+        if ($today->between($start, $end)) {
+            return 'Sedang PKL';
+        }
+
+        if ($today->gt($end)) {
+            return 'Selesai PKL';
+        }
+
+        return 'Akan PKL';
+    }
+
+    // Method untuk mendapatkan warna badge status
+    public function getStatusColorAttribute(): string
+    {
+        return match($this->status_pkl) {
+            'Sedang PKL' => 'success',
+            'Selesai PKL' => 'primary',
+            'Akan PKL' => 'warning',
+            default => 'secondary'
+        };
+    }
+
+    // Method untuk mendapatkan durasi PKL dalam hari
+    public function getDurasiPklAttribute(): int
+    {
+        if (!$this->tanggal_mulai_pkl || !$this->tanggal_selesai_pkl) {
+            return 0;
+        }
+
+        return $this->tanggal_mulai_pkl->diffInDays($this->tanggal_selesai_pkl);
     }
 }

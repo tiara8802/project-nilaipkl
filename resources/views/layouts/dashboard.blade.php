@@ -47,17 +47,20 @@
         /* Sidebar Modern */
         .sidebar {
             background: linear-gradient(180deg, var(--sidebar-bg) 0%, #16213e 100%);
-            min-height: 100vh;
+            height: 100vh;
             position: fixed;
             width: 280px;
             z-index: 1000;
             box-shadow: 5px 0 30px rgba(0,0,0,0.1);
             transition: var(--transition);
+            display: flex;
+            flex-direction: column;
         }
         
         .sidebar-brand {
             padding: 30px 25px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
         }
         
         .brand-logo {
@@ -93,6 +96,7 @@
             padding: 25px;
             text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
         }
         
         .user-avatar {
@@ -125,7 +129,17 @@
         }
         
         .sidebar-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .menu-items {
+            flex: 1;
             padding: 25px 0;
+            overflow-y: auto;
         }
         
         .nav-item {
@@ -139,6 +153,7 @@
             align-items: center;
             transition: var(--transition);
             border-left: 4px solid transparent;
+            text-decoration: none;
         }
         
         .nav-link:hover {
@@ -164,11 +179,52 @@
             font-weight: 500;
         }
         
+        /* TOMBOL LOGOUT DI SIDEBAR - JELAS DAN PASTI KELIHATAN */
+        .logout-section {
+            padding: 20px 25px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+        
+        .logout-btn-sidebar {
+            background: linear-gradient(135deg, rgba(247, 37, 133, 0.2) 0%, rgba(181, 23, 158, 0.2) 100%);
+            color: white;
+            border: 1px solid rgba(247, 37, 133, 0.3);
+            padding: 16px 25px;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logout-btn-sidebar:hover {
+            background: linear-gradient(135deg, rgba(247, 37, 133, 0.3) 0%, rgba(181, 23, 158, 0.3) 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(247, 37, 133, 0.3);
+            border-color: rgba(247, 37, 133, 0.5);
+        }
+        
+        .logout-btn-sidebar i {
+            font-size: 20px;
+            color: #ff6b9d;
+        }
+        
         /* Main Content */
         .main-content {
             margin-left: 280px;
             padding: 30px;
             transition: var(--transition);
+            min-height: 100vh;
         }
         
         /* Topbar */
@@ -310,18 +366,6 @@
             font-size: 0.95rem;
             margin: 0;
         }
-        
-        .stat-trend {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        
-        .trend-up { color: #28a745; }
-        .trend-down { color: #dc3545; }
         
         /* Welcome Card */
         .welcome-card {
@@ -647,14 +691,22 @@
         .menu-toggle:hover {
             transform: scale(1.1);
         }
-
-        /* Toast Notification */
-        .toast-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 300px;
+        
+        /* ANIMASI KHUSUS UNTUK TOMBOL LOGOUT */
+        .logout-btn-sidebar::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateY(-50%);
+            transition: left 0.5s ease;
+        }
+        
+        .logout-btn-sidebar:hover::after {
+            left: 100%;
         }
     </style>
 </head>
@@ -683,80 +735,64 @@
                 <i class="fas fa-user-tie"></i>
             </div>
             <div class="user-details">
-                <h5>{{ Auth::user()->name ?? 'Administrator' }}</h5>
-                <p>{{ Auth::user()->jabatan ?? 'Guru Pembimbing' }}</p>
-                <span class="badge badge-primary mt-2">{{ Auth::user()->is_admin ? 'Administrator' : 'Guru' }}</span>
+                <h5>{{ Auth::guard('guru')->user()->nama ?? 'Administrator' }}</h5>
+                <p>{{ Auth::guard('guru')->user()->jabatan ?? 'Guru Pembimbing' }}</p>
+                <span class="badge badge-primary mt-2">
+                    {{ Auth::guard('guru')->user()->is_admin ? 'Administrator' : 'Guru' }}
+                </span>
             </div>
         </div>
         
-        <!-- Menu -->
+        <!-- Menu Items -->
         <div class="sidebar-menu">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('dashboard') }}">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span class="nav-text">Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('siswa.index') }}">
-                        <i class="fas fa-users"></i>
-                        <span class="nav-text">Data Siswa</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('nilai-pkl.index') }}">
-                        <i class="fas fa-file-alt"></i>
-                        <span class="nav-text">Nilai PKL</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-chart-bar"></i>
-                        <span class="nav-text">Laporan</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="fas fa-cog"></i>
-                        <span class="nav-text">Pengaturan</span>
-                    </a>
-                </li>
-                <li class="nav-item mt-4">
-                    <form method="POST" action="{{ route('logout') }}" class="w-100">
-                        @csrf
-                        <button type="submit" class="nav-link btn btn-link w-100 text-start" style="color: rgba(255,255,255,0.7); border: none; background: none;">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span class="nav-text">Keluar</span>
-                        </button>
-                    </form>
-                </li>
-            </ul>
+            <div class="menu-items">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ route('dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                   <li class="nav-item">
+                        <a class="nav-link {{ Request::routeIs('siswa.index') ? 'active' : '' }}" href="{{ route('siswa.index') }}">
+                            <i class="fas fa-users"></i>
+                            <span class="nav-text">Data Siswa</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::routeIs('nilai-pkl.index') ? 'active' : '' }}" href="{{ route('nilai-pkl.index') }}">
+                            <i class="fas fa-file-alt"></i>
+                            <span class="nav-text">Nilai PKL</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-chart-bar"></i>
+                            <span class="nav-text">Laporan</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-cog"></i>
+                            <span class="nav-text">Pengaturan</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- TOMBOL LOGOUT - JELAS DAN PASTI KELIHATAN -->
+            <div class="logout-section">
+                <button class="logout-btn-sidebar" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Keluar dari Sistem</span>
+                </button>
+            </div>
         </div>
     </div>
     
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
-        <!-- Flash Messages -->
-        @if(session('success') || session('error'))
-        <div class="toast-notification">
-            @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            @endif
-            @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            @endif
-        </div>
-        @endif
-        
         <!-- Topbar -->
         <div class="topbar fade-in">
             <div class="page-title">
@@ -771,10 +807,9 @@
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="user-info-sm">
-                            <div class="user-name">{{ Auth::user()->name ?? 'Administrator' }}</div>
-                            <div class="user-role">{{ Auth::user()->is_admin ? 'Admin' : 'Guru' }}</div>
+                            <div class="user-name">{{ Auth::guard('guru')->user()->nama ?? 'Administrator' }}</div>
+                            <div class="user-role">{{ Auth::guard('guru')->user()->is_admin ? 'Admin' : 'Guru' }}</div>
                         </div>
-                        <i class="fas fa-chevron-down ms-2"></i>
                     </button>
                 </div>
             </div>
@@ -783,7 +818,7 @@
         <!-- Welcome Card -->
         <div class="welcome-card fade-in" data-aos="fade-up">
             <div class="welcome-content">
-                <h2>Selamat Datang, {{ Auth::user()->name ?? 'Administrator' }}! 👋</h2>
+                <h2>Selamat Datang, {{ Auth::guard('guru')->user()->nama ?? 'Administrator' }}! 👋</h2>
                 <p>Sistem Pengelolaan Nilai Praktik Kerja Lapangan SMK Negeri 1 Kota Cirebon siap membantu Anda mengelola data siswa dan nilai PKL dengan mudah dan efisien.</p>
                 <a href="{{ route('siswa.index') }}" class="btn btn-light btn-lg px-4">
                     <i class="fas fa-rocket me-2"></i> Mulai Kerja
@@ -803,10 +838,6 @@
                 <div class="stat-content">
                     <h3>{{ $stats['total_siswa'] ?? 0 }}</h3>
                     <p>Total Siswa PKL</p>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>12% dari bulan lalu</span>
-                    </div>
                 </div>
             </div>
             
@@ -817,10 +848,6 @@
                 <div class="stat-content">
                     <h3>{{ $stats['total_nilai'] ?? 0 }}</h3>
                     <p>Nilai PKL Tercatat</p>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>8% dari bulan lalu</span>
-                    </div>
                 </div>
             </div>
             
@@ -829,16 +856,8 @@
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div class="stat-content">
-                    <h3>{{ $stats['nilai_terverifikasi'] ?? 0 }}</h3>
-                    <p>Nilai Terverifikasi</p>
-                    <div class="stat-trend {{ ($stats['nilai_terverifikasi'] ?? 0) > 0 ? 'trend-up' : '' }}">
-                        @if(($stats['nilai_terverifikasi'] ?? 0) > 0)
-                            <i class="fas fa-arrow-up"></i>
-                            <span>{{ round((($stats['nilai_terverifikasi'] ?? 0) / max(($stats['total_nilai'] ?? 1), 1)) * 100) }}% dari total</span>
-                        @else
-                            <span>Belum ada verifikasi</span>
-                        @endif
-                    </div>
+                    <h3>{{ $stats['nilai_saya'] ?? 0 }}</h3>
+                    <p>Nilai yang Saya Input</p>
                 </div>
             </div>
             
@@ -849,15 +868,6 @@
                 <div class="stat-content">
                     <h3>{{ number_format($stats['nilai_rata_rata_semua'] ?? 0, 1) }}</h3>
                     <p>Rata-rata Nilai</p>
-                    <div class="stat-trend {{ ($stats['nilai_rata_rata_semua'] ?? 0) >= 75 ? 'trend-up' : 'trend-down' }}">
-                        @if(($stats['nilai_rata_rata_semua'] ?? 0) >= 75)
-                            <i class="fas fa-arrow-up"></i>
-                            <span>Nilai bagus</span>
-                        @else
-                            <i class="fas fa-arrow-down"></i>
-                            <span>Perlu perhatian</span>
-                        @endif
-                    </div>
                 </div>
             </div>
         </div>
@@ -865,9 +875,6 @@
         <!-- Quick Actions -->
         <div class="section-header fade-in" data-aos="fade-up" data-aos-delay="150">
             <h3><i class="fas fa-bolt me-2 text-warning"></i> Aksi Cepat</h3>
-            <a href="{{ route('nilai-pkl.index') }}" class="btn btn-outline-primary btn-sm">
-                <i class="fas fa-eye me-1"></i> Lihat Semua
-            </a>
         </div>
         
         <div class="quick-actions-grid fade-in" data-aos="fade-up" data-aos-delay="200">
@@ -924,7 +931,6 @@
                                 <th>Paket Keahlian</th>
                                 <th>Nilai Rata-rata</th>
                                 <th>Huruf</th>
-                                <th>Status</th>
                                 <th>Tanggal</th>
                             </tr>
                         </thead>
@@ -959,17 +965,6 @@
                                         <strong>{{ $nilai->nilai_huruf ?? $nilai->huruf_rata_rata }}</strong>
                                     </span>
                                 </td>
-                                <td>
-                                    @if($nilai->is_verified ?? false)
-                                        <span class="badge badge-success">
-                                            <i class="fas fa-check-circle me-1"></i> Terverifikasi
-                                        </span>
-                                    @else
-                                        <span class="badge badge-warning">
-                                            <i class="fas fa-clock me-1"></i> Belum
-                                        </span>
-                                    @endif
-                                </td>
                                 <td>{{ $nilai->created_at->format('d M Y') }}</td>
                             </tr>
                             @endforeach
@@ -997,108 +992,292 @@
     <!-- AOS Animation -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
-        // Initialize AOS
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 100
+    });
+    
+    // Menu Toggle for Mobile
+    document.getElementById('menuToggle').addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        
+        if (window.innerWidth <= 992) {
+            if (!sidebar.contains(event.target) && !menuToggle.contains(event.target) && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        }
+    });
+    
+    // Add hover animation to stat cards
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px)';
         });
         
-        // Menu Toggle for Mobile
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('active');
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
         });
-        
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const menuToggle = document.getElementById('menuToggle');
-            
-            if (window.innerWidth <= 992) {
-                if (!sidebar.contains(event.target) && !menuToggle.contains(event.target) && sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+    });
+    
+    // Dynamic greeting based on time
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : hour < 18 ? 'Selamat Sore' : 'Selamat Malam';
+    const welcomeTitle = document.querySelector('.welcome-content h2');
+    if (welcomeTitle) {
+        welcomeTitle.innerHTML = welcomeTitle.innerHTML.replace('Selamat Datang', greeting);
+    }
+    
+    // ========== SWEETALERT2 LOGIN SUCCESS - FIXED ========== //
+    @if(session('success'))
+    if (typeof Swal !== 'undefined') {
+        // Tunggu sedikit agar DOM siap
+        setTimeout(() => {
+            Swal.fire({
+                title: 'Login Berhasil!',
+                text: '{{ session("success") }}',
+                icon: 'success',
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false,
+                willClose: () => {
+                    // Hapus session success setelah alert ditutup
+                    console.log('Alert login berhasil ditutup');
                 }
+            });
+        }, 300);
+    }
+    @endif
+    
+    // ========== LOGOUT CONFIRMATION - DIBAIKIN ========== //
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        Swal.fire({
+            title: '<div style="font-size: 1.8rem; font-weight: 700; color: #f72585; margin-bottom: 10px;"><i class="fas fa-sign-out-alt me-2"></i>Konfirmasi Logout</div>',
+            html: `
+                <div style="text-align: center; padding: 15px 0;">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 20px; background: linear-gradient(135deg, #f72585 0%, #b5179e 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-sign-out-alt" style="font-size: 32px; color: white;"></i>
+                    </div>
+                    <h3 style="font-size: 1.4rem; font-weight: 600; color: #333; margin-bottom: 10px;">Yakin ingin keluar?</h3>
+                    <p style="color: #666; font-size: 1rem; margin-bottom: 5px;">Anda akan keluar dari Sistem PKL</p>
+                    <p style="color: #999; font-size: 0.9rem;">Pastikan semua pekerjaan Anda sudah disimpan.</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #4361ee;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-user-circle" style="font-size: 20px; color: #4361ee;"></i>
+                        <div>
+                            <div style="font-weight: 600; color: #333;">{{ Auth::guard('guru')->user()->nama ?? 'Administrator' }}</div>
+                            <div style="font-size: 0.85rem; color: #666;">{{ Auth::guard('guru')->user()->is_admin ? 'Administrator' : 'Guru' }}</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f72585',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-sign-out-alt me-2"></i>Ya, Keluar Sekarang',
+            cancelButtonText: '<i class="fas fa-times me-2"></i>Batalkan',
+            reverseButtons: true,
+            background: '#fff',
+            color: '#212529',
+            width: 450,
+            padding: '30px',
+            borderRadius: '20px',
+            customClass: {
+                popup: 'logout-confirmation-popup',
+                icon: 'logout-confirmation-icon',
+                confirmButton: 'logout-confirm-btn',
+                cancelButton: 'logout-cancel-btn'
+            },
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading animation
+                Swal.fire({
+                    title: 'Sedang memproses...',
+                    html: '<div style="margin: 20px 0;"><div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div></div><p style="color: #666;">Tunggu sebentar, Anda sedang keluar dari sistem</p>',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    willOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Buat form logout setelah 1 detik
+                setTimeout(() => {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("logout") }}';
+                    
+                    const csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = '_token';
+                    csrfToken.value = '{{ csrf_token() }}';
+                    
+                    form.appendChild(csrfToken);
+                    document.body.appendChild(form);
+                    form.submit();
+                }, 1500);
             }
         });
-        
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                if (alert.classList.contains('alert-dismissible')) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }
-            });
-        }, 5000);
-        
-        // Add hover animation to stat cards
-        const statCards = document.querySelectorAll('.stat-card');
-        statCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-10px)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
-        
-        // Dynamic greeting based on time
-        const hour = new Date().getHours();
-        const greeting = hour < 12 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : hour < 18 ? 'Selamat Sore' : 'Selamat Malam';
-        const welcomeTitle = document.querySelector('.welcome-content h2');
-        if (welcomeTitle) {
-            welcomeTitle.innerHTML = welcomeTitle.innerHTML.replace('Selamat Datang', greeting);
-        }
-        
-        // Real-time clock
-        function updateClock() {
-            const now = new Date();
-            const options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            };
-            const dateStr = now.toLocaleDateString('id-ID', options);
-            const clockElement = document.querySelector('.page-title p');
-            if (clockElement && document.querySelector('.clock-time')) {
-                document.querySelector('.clock-time').textContent = dateStr;
-            }
-        }
-        
-        // Create clock element if not exists
-        if (!document.querySelector('.clock-time')) {
-            const pageTitle = document.querySelector('.page-title p');
-            if (pageTitle) {
-                pageTitle.innerHTML += '<br><small class="clock-time text-muted"></small>';
-                updateClock();
-                setInterval(updateClock, 1000);
-            }
-        }
-        
-        // Success message animation (if any success message in session)
-        @if(session('success'))
-            const successAlert = document.createElement('div');
-            successAlert.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-4';
-            successAlert.style.zIndex = '9999';
-            successAlert.innerHTML = `
-                <i class="fas fa-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(successAlert);
-            
-            setTimeout(() => {
-                const bsAlert = new bootstrap.Alert(successAlert);
+    });
+    
+    // Auto-hide any existing Bootstrap alerts
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            if (alert.classList.contains('alert-dismissible')) {
+                const bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
-            }, 4000);
-        @endif
-    </script>
+            }
+        });
+    }, 5000);
+</script>
+    
+    <style>
+        /* Animasi untuk SweetAlert popup */
+        .animated-popup {
+            animation: sweetAlertCenter 0.3s ease-out !important;
+            border-radius: 20px !important;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        
+        @keyframes sweetAlertCenter {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .swal2-icon-success .swal2-icon-content {
+            color: #28a745 !important;
+            font-size: 3.5rem !important;
+        }
+        
+        .swal2-title {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            color: #28a745 !important;
+            margin-bottom: 5px !important;
+        }
+        
+        .swal2-icon {
+            width: 80px !important;
+            height: 80px !important;
+            margin: 10px auto 15px !important;
+            border-width: 4px !important;
+        }
+        
+        /* Progress bar timer */
+        .swal2-timer-progress-bar {
+            background: #4361ee !important;
+            height: 4px !important;
+        }
+        
+        /* Custom styling untuk logout confirmation */
+        .logout-confirmation-popup {
+            border-radius: 20px !important;
+            box-shadow: 0 25px 50px rgba(247, 37, 133, 0.2) !important;
+            border: 1px solid rgba(247, 37, 133, 0.1) !important;
+        }
+        
+        .logout-confirmation-icon {
+            display: none !important;
+        }
+        
+        .logout-confirm-btn {
+            background: linear-gradient(135deg, #f72585 0%, #b5179e 100%) !important;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 12px 30px !important;
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3) !important;
+        }
+        
+        .logout-confirm-btn:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(247, 37, 133, 0.4) !important;
+        }
+        
+        .logout-cancel-btn {
+            background: #f8f9fa !important;
+            border: 2px solid #dee2e6 !important;
+            color: #495057 !important;
+            border-radius: 10px !important;
+            padding: 12px 30px !important;
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .logout-cancel-btn:hover {
+            background: #e9ecef !important;
+            border-color: #adb5bd !important;
+            transform: translateY(-2px) !important;
+        }
+        
+        /* Animasi untuk popup logout */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translate3d(0, -20px, 0);
+            }
+            to {
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }
+        }
+        
+        @keyframes fadeOutUp {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translate3d(0, -20px, 0);
+            }
+        }
+        
+        .animate__animated {
+            animation-duration: 0.3s;
+            animation-fill-mode: both;
+        }
+        
+        .animate__fadeInDown {
+            animation-name: fadeInDown;
+        }
+        
+        .animate__fadeOutUp {
+            animation-name: fadeOutUp;
+        }
+    </style>
 </body>
 </html>
