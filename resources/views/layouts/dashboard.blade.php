@@ -777,7 +777,7 @@
                             <i class="fas fa-cog"></i>
                             <span class="nav-text">Pengaturan</span>
                         </a>
-                    </li>
+                    </li> 
                 </ul>
             </div>
             
@@ -929,7 +929,7 @@
                                 <th>Siswa</th>
                                 <th>NIS</th>
                                 <th>Paket Keahlian</th>
-                                <th>Nilai Rata-rata</th>
+                                <th>Nilai Rata-rata</th>  
                                 <th>Huruf</th>
                                 <th>Tanggal</th>
                             </tr>
