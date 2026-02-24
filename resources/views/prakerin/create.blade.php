@@ -316,7 +316,7 @@
                                         </td>
                                         <td class="px-4 py-4">
                                             <div class="d-flex align-items-center">
-                                                <div class="position-relative" style="width: 120px;">
+                                                <div class="position-relative" style="width: 100px;">
                                                     <input type="number" name="{{ $aspek['name'] }}" required min="0" max="100" 
                                                            class="form-control text-center fw-semibold nilai-input"
                                                            style="width: 100px; height: 45px; font-size: 16px; padding-right: 35px; display: inline-block; border-radius: 10px;"

@@ -47,10 +47,6 @@
                         <div class="col-md-4">
                             <select name="status" class="form-select" onchange="this.form.submit()">
                                 <option value="">Semua Status</option>
-                                <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
-                                <option value="perbaikan" {{ request('status') == 'perbaikan' ? 'selected' : '' }}>Perbaikan</option>
-                                <option value="arsip" {{ request('status') == 'arsip' ? 'selected' : '' }}>Arsip</option>
                             </select>
                         </div>
                     </form>

@@ -435,11 +435,6 @@
                             </button>
                         </div>
                         
-                        <!-- Password Information -->
-                        <div class="password-info">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Password Default:</strong> <code>password123</code> (sama untuk semua guru)
-                        </div>
                     </div>
                     
                     <!-- Remember Me & Forgot Password -->

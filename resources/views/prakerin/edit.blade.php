@@ -54,12 +54,12 @@
             <div class="col-12">
                 <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
                     <!-- Card Header -->
-                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
                         <div class="d-flex align-items-center">
                             <div class="p-2 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg me-3">
                                 <i class="fas fa-user-graduate text-white"></i>
                             </div>
-                            <h2 class="h5 fw-bold text-blue-900 mb-0">
+                            <h2 class="h5 fw-bold text-white mb-0">
                                 Data Siswa
                             </h2>
                         </div>
@@ -246,17 +246,17 @@
             <div class="col-12">
                 <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
                     <!-- Card Header -->
-                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
                                 <div class="p-2 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg me-3">
                                     <i class="fas fa-chart-bar text-white"></i>
                                 </div>
                                 <div>
-                                    <h2 class="h5 fw-bold text-blue-900 mb-1">
+                                    <h2 class="h5 fw-bold text-white mb-1">
                                         Penilaian 10 Aspek PKL (0-100)
                                     </h2>
-                                    <p class="small text-muted mb-0">Edit nilai untuk setiap aspek penilaian</p>
+                                    <p class="small text-white mb-0">Edit nilai untuk setiap aspek penilaian</p>
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2">
@@ -335,7 +335,7 @@
                                         </td>
                                         <td class="px-4 py-4">
                                             <div class="d-flex align-items-center">
-                                                <div class="position-relative" style="width: 120px;">
+                                                <div class="position-relative" style="width: 100px;">
                                                     <input type="number" name="{{ $aspek['name'] }}" required min="0" max="100" 
                                                            class="form-control text-center fw-semibold nilai-input"
                                                            style="width: 100px; height: 45px; font-size: 16px; padding-right: 35px; display: inline-block; border-radius: 10px;"
@@ -472,12 +472,12 @@
             <div class="col-12">
                 <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
                     <!-- Card Header -->
-                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
                         <div class="d-flex align-items-center">
                             <div class="p-2 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg me-3">
                                 <i class="fas fa-signature text-white"></i>
                             </div>
-                            <h2 class="h5 fw-bold text-blue-900 mb-0">
+                            <h2 class="h5 fw-bold text-white mb-1">
                                 Tanda Tangan & Validasi
                             </h2>
                         </div>
