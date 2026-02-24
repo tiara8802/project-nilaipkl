@@ -444,6 +444,8 @@
             box-shadow: 0 5px 20px rgba(0,0,0,0.05);
             position: relative;
             overflow: hidden;
+            text-decoration: none;
+            display: block;
         }
         
         .action-btn::before {
@@ -743,40 +745,40 @@
             </div>
         </div>
         
-        <!-- Menu Items -->
+        <!-- Menu Items - ✅ FIXED: GANTI SISWA & NILAI PKL DENGAN PRAKERIN -->
         <div class="sidebar-menu">
             <div class="menu-items">
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link active" href="{{ route('dashboard') }}">
+                        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                             <i class="fas fa-tachometer-alt"></i>
                             <span class="nav-text">Dashboard</span>
                         </a>
                     </li>
-                   <li class="nav-item">
-                        <a class="nav-link {{ Request::routeIs('siswa.index') ? 'active' : '' }}" href="{{ route('siswa.index') }}">
-                            <i class="fas fa-users"></i>
-                            <span class="nav-text">Data Siswa</span>
+                    
+                    <!-- ✅ MENU DATA PKL (PRAKERIN) -->
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('prakerin.index') ? 'active' : '' }}" href="{{ route('prakerin.index') }}">
+                            <i class="fas fa-file-alt"></i>
+                            <span class="nav-text">Data PKL</span>
+                        </a>
+                    </li>
+                    
+                    <!-- ✅ MENU TAMBAH PKL -->
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('prakerin.create') ? 'active' : '' }}" href="{{ route('prakerin.create') }}">
+                            <i class="fas fa-plus-circle"></i>
+                            <span class="nav-text">Tambah PKL</span>
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link {{ Request::routeIs('nilai-pkl.index') ? 'active' : '' }}" href="{{ route('nilai-pkl.index') }}">
-                            <i class="fas fa-file-alt"></i>
-                            <span class="nav-text">Nilai PKL</span>
+                        <a class="nav-link {{ request()->routeIs('prakerin.cetak.semua') ? 'active' : '' }}" href="{{ route('prakerin.cetak.semua') }}">
+                            <i class="fas fa-print"></i>
+                            <span class="nav-text">Cetak Semua</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-chart-bar"></i>
-                            <span class="nav-text">Laporan</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-cog"></i>
-                            <span class="nav-text">Pengaturan</span>
-                        </a>
+                    
                     </li> 
                 </ul>
             </div>
@@ -815,12 +817,12 @@
             </div>
         </div>
         
-        <!-- Welcome Card -->
+        <!-- Welcome Card - ✅ FIXED: GANTI ROUTE SISWA DENGAN PRAKERIN -->
         <div class="welcome-card fade-in" data-aos="fade-up">
             <div class="welcome-content">
                 <h2>Selamat Datang, {{ Auth::guard('guru')->user()->nama ?? 'Administrator' }}! 👋</h2>
-                <p>Sistem Pengelolaan Nilai Praktik Kerja Lapangan SMK Negeri 1 Kota Cirebon siap membantu Anda mengelola data siswa dan nilai PKL dengan mudah dan efisien.</p>
-                <a href="{{ route('siswa.index') }}" class="btn btn-light btn-lg px-4">
+                <p>Sistem Pengelolaan Nilai Praktik Kerja Lapangan SMK Negeri 1 Kota Cirebon siap membantu Anda mengelola data PKL dengan mudah dan efisien.</p>
+                <a href="{{ route('prakerin.index') }}" class="btn btn-light btn-lg px-4">
                     <i class="fas fa-rocket me-2"></i> Mulai Kerja
                 </a>
             </div>
@@ -833,33 +835,23 @@
         <div class="stats-grid fade-in" data-aos="fade-up" data-aos-delay="100">
             <div class="stat-card">
                 <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ $stats['total_siswa'] ?? 0 }}</h3>
-                    <p>Total Siswa PKL</p>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">
                     <i class="fas fa-file-alt"></i>
                 </div>
                 <div class="stat-content">
                     <h3>{{ $stats['total_nilai'] ?? 0 }}</h3>
-                    <p>Nilai PKL Tercatat</p>
+                    <p>Total Data PKL</p>
                 </div>
             </div>
             
-            <div class="stat-card">
+            <!-- <div class="stat-card">
                 <div class="stat-icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div class="stat-content">
-                    <h3>{{ $stats['nilai_saya'] ?? 0 }}</h3>
-                    <p>Nilai yang Saya Input</p>
+                    <h3>{{ $stats['selesai'] ?? 0 }}</h3>
+                    <p>Selesai</p>
                 </div>
-            </div>
+            </div> -->
             
             <div class="stat-card">
                 <div class="stat-icon">
@@ -870,52 +862,62 @@
                     <p>Rata-rata Nilai</p>
                 </div>
             </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>{{ \App\Models\Prakerin::distinct('nis')->count('nis') }}</h3>
+                    <p>Siswa PKL</p>
+                </div>
+            </div>
         </div>
         
-        <!-- Quick Actions -->
+        <!-- Quick Actions - ✅ FIXED: GANTI SEMUA ROUTE SISWA & NILAI PKL -->
         <div class="section-header fade-in" data-aos="fade-up" data-aos-delay="150">
             <h3><i class="fas fa-bolt me-2 text-warning"></i> Aksi Cepat</h3>
         </div>
         
         <div class="quick-actions-grid fade-in" data-aos="fade-up" data-aos-delay="200">
-            <a href="{{ route('siswa.create') }}" class="action-btn text-decoration-none">
-                <div class="action-icon">
-                    <i class="fas fa-user-plus"></i>
-                </div>
-                <h5>Tambah Siswa</h5>
-                <p>Tambahkan data siswa baru untuk PKL</p>
-            </a>
-            
-            <a href="{{ route('nilai-pkl.create') }}" class="action-btn text-decoration-none">
+            <a href="{{ route('prakerin.create') }}" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-plus-circle"></i>
                 </div>
-                <h5>Input Nilai PKL</h5>
-                <p>Input nilai praktik kerja lapangan</p>
+                <h5>Input PKL Baru</h5>
+                <p>Tambahkan data PKL dan nilai</p>
             </a>
             
-            <a href="{{ route('nilai-pkl.index') }}" class="action-btn text-decoration-none">
+            <a href="{{ route('prakerin.index') }}" class="action-btn">
                 <div class="action-icon">
                     <i class="fas fa-list"></i>
                 </div>
-                <h5>Lihat Nilai</h5>
-                <p>Kelola semua nilai PKL yang ada</p>
+                <h5>Lihat Data PKL</h5>
+                <p>Kelola semua data PKL</p>
             </a>
             
-            <a href="{{ route('siswa.index') }}" class="action-btn text-decoration-none">
+            <a href="{{ route('prakerin.cetak.semua') }}" class="action-btn">
                 <div class="action-icon">
-                    <i class="fas fa-chart-bar"></i>
+                    <i class="fas fa-print"></i>
                 </div>
-                <h5>Data Siswa</h5>
-                <p>Lihat dan kelola data siswa</p>
+                <h5>Cetak Sertifikat</h5>
+                <p>Cetak sertifikat PKL</p>
+            </a>
+            
+            <a href="{{ route('sertifikat.cetak', ['nis' => '2021001']) }}" class="action-btn">
+                <div class="action-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <h5>Contoh Sertifikat</h5>
+                <p>Preview sertifikat PKL</p>
             </a>
         </div>
         
-        <!-- Recent Data -->
+        <!-- Recent Data - ✅ FIXED: MENAMPILKAN 3 DATA TERBARU SAJA -->
         <div class="recent-card fade-in" data-aos="fade-up" data-aos-delay="250">
             <div class="section-header">
-                <h3><i class="fas fa-history me-2 text-info"></i> Nilai PKL Terbaru</h3>
-                <a href="{{ route('nilai-pkl.index') }}" class="btn btn-primary btn-sm">
+                <h3><i class="fas fa-history me-2 text-info"></i> Data PKL Terbaru</h3>
+                <a href="{{ route('prakerin.index') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-arrow-right me-1"></i> Lihat Semua
                 </a>
             </div>
@@ -926,8 +928,12 @@
                         <thead>
                             <tr>
                                 <th>No</th>
-                                <th>Siswa</th>
+                                <th>Nama Siswa</th>
                                 <th>NIS</th>
+                                <th>Keahlian</th>
+                                <th>Tempat PKL</th>
+                                <th>Nilai Rata-rata</th>
+                                <th>Status</th>
                                 <th>Paket Keahlian</th>
                                 <th>Nilai Rata-rata</th>  
                                 <th>Huruf</th>
@@ -935,7 +941,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($recentNilai as $index => $nilai)
+                            @php
+                                // Ambil hanya 3 data terbaru
+                                $recentData = $recentNilai->take(3);
+                            @endphp
+                            
+                            @foreach($recentData as $index => $prakerin)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>
@@ -944,30 +955,39 @@
                                             <i class="fas fa-user text-white"></i>
                                         </div>
                                         <div>
-                                            <strong>{{ $nilai->siswa->nama ?? 'N/A' }}</strong>
+                                            <strong>{{ $prakerin->nama }}</strong>
+                                            <div class="small text-muted">{{ $prakerin->no_sertifikat }}</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td><span class="badge badge-info">{{ $nilai->siswa->nis ?? 'N/A' }}</span></td>
-                                <td>{{ $nilai->siswa->paket_keahlian ?? 'N/A' }}</td>
+                                <td><span class="badge badge-info">{{ $prakerin->nis }}</span></td>
+                                <td>{{ $prakerin->keahlian }}</td>
+                                <td>{{ $prakerin->tempat_pkl }}</td>
                                 <td>
                                     @php
+                                        $rata = $prakerin->rata_rata ?? 0;
                                         $colorClass = 'badge-success';
-                                        if(($nilai->nilai_rata_rata ?? $nilai->rata_rata) < 70) $colorClass = 'badge-danger';
-                                        elseif(($nilai->nilai_rata_rata ?? $nilai->rata_rata) < 80) $colorClass = 'badge-warning';
+                                        if($rata < 70) $colorClass = 'badge-danger';
+                                        elseif($rata < 80) $colorClass = 'badge-warning';
                                     @endphp
                                     <span class="badge {{ $colorClass }}">
-                                        {{ number_format($nilai->nilai_rata_rata ?? $nilai->rata_rata, 2) }}
+                                        {{ number_format($rata, 2) }}
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge badge-primary">
-                                        <strong>{{ $nilai->nilai_huruf ?? $nilai->huruf_rata_rata }}</strong>
-                                    </span>
+                                    {!! $prakerin->status_label ?? '<span class="badge badge-primary">Aktif</span>' !!}
                                 </td>
-                                <td>{{ $nilai->created_at->format('d M Y') }}</td>
                             </tr>
                             @endforeach
+                            
+                            @if($recentNilai->count() > 3)
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-ellipsis-h me-2"></i> 
+                                     data lainnya...
+                                </td>
+                            </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>
@@ -976,10 +996,10 @@
                     <div class="empty-icon">
                         <i class="fas fa-inbox"></i>
                     </div>
-                    <h4>Belum ada data nilai PKL</h4>
-                    <p>Mulai dengan menginput nilai PKL pertama untuk siswa</p>
-                    <a href="{{ route('nilai-pkl.create') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-plus me-2"></i> Input Nilai Pertama
+                    <h4>Belum ada data PKL</h4>
+                    <p>Mulai dengan menginput data PKL pertama</p>
+                    <a href="{{ route('prakerin.create') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i> Input Data PKL
                     </a>
                 </div>
             @endif
@@ -1039,30 +1059,6 @@
     if (welcomeTitle) {
         welcomeTitle.innerHTML = welcomeTitle.innerHTML.replace('Selamat Datang', greeting);
     }
-    
-    // ========== SWEETALERT2 LOGIN SUCCESS - FIXED ========== //
-    @if(session('success'))
-    if (typeof Swal !== 'undefined') {
-        // Tunggu sedikit agar DOM siap
-        setTimeout(() => {
-            Swal.fire({
-                title: 'Login Berhasil!',
-                text: '{{ session("success") }}',
-                icon: 'success',
-                timer: 2000,
-                timerProgressBar: true,
-                showConfirmButton: false,
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                allowEnterKey: false,
-                willClose: () => {
-                    // Hapus session success setelah alert ditutup
-                    console.log('Alert login berhasil ditutup');
-                }
-            });
-        }, 300);
-    }
-    @endif
     
     // ========== LOGOUT CONFIRMATION - DIBAIKIN ========== //
     document.getElementById('logoutBtn').addEventListener('click', function() {
