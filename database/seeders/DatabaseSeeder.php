@@ -3,16 +3,19 @@
 namespace Database\Seeders;
 
 use App\Models\Guru;
-use App\Models\Siswa;
-use App\Models\NilaiPkl;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Seeder untuk Guru
+        // ========== HAPUS DULU DATA LAMA ==========
+        DB::table('gurus')->truncate();
+        
+        // ========== SEEDER GURU PAKAI DB FACADE ==========
         $gurus = [
             [
                 'nama' => 'Administrator Sistem',
@@ -22,54 +25,46 @@ class DatabaseSeeder extends Seeder
                 'nip' => '198001012000011001',
                 'jabatan' => 'Admin Sistem PKL',
                 'is_admin' => true,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ],
-            [
-                'nama' => 'Dr. Surya Adi, M.Pd.',
-                'email' => 'surya.adi@smk1cirebon.sch.id',
-                'password' => Hash::make('password123'),
-                'kode_guru' => 'GUR001',
-                'nip' => '197502152000032002',
-                'jabatan' => 'Kepala Program TKJ',
+             [
+                'nama' => 'DUDUNG ZULKIPLI, S.KOM., M.M.',
+                'email' => 'dudung@smk1cirebon.sch.id',
+                'password' => Hash::make('dudung123'),
+                'kode_guru' => 'ADM002',
+                'nip' => '198001012000011002',
+                'jabatan' => 'Admin Sistem PKL',
                 'is_admin' => false,
-            ],
-            [
-                'nama' => 'Diana Putri, S.Pd.',
-                'email' => 'diana.putri@smk1cirebon.sch.id',
-                'password' => Hash::make('password123'),
-                'kode_guru' => 'GUR002',
-                'nip' => '198003202005042003',
-                'jabatan' => 'Guru Produktif RPL',
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ], [
+                'nama' => 'ARIS PANDU WINATA, S.Si.',
+                'email' => 'pandu@smk1cirebon.sch.id',
+                'password' => Hash::make('pandu123'),
+                'kode_guru' => 'ADM003',
+                'nip' => '198001012000011003',
+                'jabatan' => 'Admin Sistem PKL',
                 'is_admin' => false,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ],
+
         ];
 
-        foreach ($gurus as $guru) {
-            Guru::create($guru);
-        }
+        DB::table('gurus')->insert($gurus);
 
-        // Seeder untuk Nilai PKL contoh
-        NilaiPkl::create([
-            'siswa_id' => 1,
-            'guru_id' => 2,
-            'disiplin' => 85,
-            'tanggung_jawab' => 90,
-            'inisiatif' => 80,
-            'loyalitas' => 85,
-            'kerjasama' => 88,
-            'pengambilan_keputusan' => 82,
-            'jiwa_entrepreneur' => 75,
-            'kejujuran' => 95,
-            'kemampuan_bekerja' => 85,
-            'hasil_kerja' => 88,
-            'jumlah_nilai' => 853,
-            'nilai_rata_rata' => 85.3,
-            'nilai_huruf' => 'A',
-            'nama_pembimbing' => 'Dr. Surya Adi, M.Pd.',
-            'nama_direktur' => 'Drs. H. Ahmad Fadilah, M.M.',
-            'nomor_surat' => '001/SKP-PKL/SMK1/II/2025',
-            'tanggal_surat' => '2025-04-15',
-            'is_verified' => true,
-            'verified_at' => '2025-04-16 10:30:00',
-        ]);
+        $this->command->info('✅ Seeder Guru berhasil dijalankan!');
+        $this->command->info('📊 Guru: ' . Guru::count() . ' data');
+        
+        // ========== DEBUG: CEK EMAIL YANG MASUK ==========
+        $cekEmail = DB::table('gurus')->where('email', 'admin@pkl.smk1cirebon.sch.id')->first();
+        if ($cekEmail) {
+            $this->command->info('✅ Email admin ditemukan!');
+            $this->command->info('📧 Email: ' . $cekEmail->email);
+            $this->command->info('🔐 Password: password123');
+        } else {
+            $this->command->error('❌ Email admin TIDAK DITEMUKAN di database!');
+        }
     }
 }
