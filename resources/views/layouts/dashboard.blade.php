@@ -915,95 +915,109 @@
         
         <!-- Recent Data - ✅ FIXED: MENAMPILKAN 3 DATA TERBARU SAJA -->
         <div class="recent-card fade-in" data-aos="fade-up" data-aos-delay="250">
-            <div class="section-header">
-                <h3><i class="fas fa-history me-2 text-info"></i> Data PKL Terbaru</h3>
-                <a href="{{ route('prakerin.index') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i> Lihat Semua
-                </a>
-            </div>
-            
-            @if(isset($recentNilai) && $recentNilai->count() > 0)
-                <div class="table-container">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama Siswa</th>
-                                <th>NIS</th>
-                                <th>Keahlian</th>
-                                <th>Tempat PKL</th>
-                                <th>Nilai Rata-rata</th>
-                                <th>Status</th>
-                                <th>Paket Keahlian</th>
-                                <th>Nilai Rata-rata</th>  
-                                <th>Huruf</th>
-                                <th>Tanggal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+    <div class="section-header">
+        <h3><i class="fas fa-history me-2 text-info"></i> Data PKL Terbaru</h3>
+        <a href="{{ route('prakerin.index') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-arrow-right me-1"></i> Lihat Semua
+        </a>
+    </div>
+    
+    @if(isset($recentNilai) && $recentNilai->count() > 0)
+        <div class="table-container">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>No Sertifikat</th>
+                        <th>NIS</th>
+                        <th>Nama Siswa</th>
+                        <th>Keahlian</th>
+                        <th>Tempat PKL</th>
+                        <th>Tanggal PKL</th>
+                        <th>Nilai Rata-rata</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        // Ambil hanya 3 data terbaru
+                        $recentData = $recentNilai->take(3);
+                    @endphp
+                    
+                    @foreach($recentData as $index => $prakerin)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>
+                            <span class="badge badge-info">{{ $prakerin->no_sertifikat ?? '-' }}</span>
+                        </td>
+                        <td>{{ $prakerin->nis ?? '-' }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                    <i class="fas fa-user text-white fa-sm"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ $prakerin->nama ?? '-' }}</strong>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ $prakerin->keahlian ?? '-' }}</td>
+                        <td>{{ $prakerin->tempat_pkl ?? '-' }}</td>
+                        <td>
                             @php
-                                // Ambil hanya 3 data terbaru
-                                $recentData = $recentNilai->take(3);
+                                $tglMulai = isset($prakerin->tgl_mulai) ? \Carbon\Carbon::parse($prakerin->tgl_mulai)->format('d/m/Y') : '';
+                                $tglSelesai = isset($prakerin->tgl_selesai) ? \Carbon\Carbon::parse($prakerin->tgl_selesai)->format('d/m/Y') : '';
                             @endphp
                             
-                            @foreach($recentData as $index => $prakerin)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                            <i class="fas fa-user text-white"></i>
-                                        </div>
-                                        <div>
-                                            <strong>{{ $prakerin->nama }}</strong>
-                                            <div class="small text-muted">{{ $prakerin->no_sertifikat }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><span class="badge badge-info">{{ $prakerin->nis }}</span></td>
-                                <td>{{ $prakerin->keahlian }}</td>
-                                <td>{{ $prakerin->tempat_pkl }}</td>
-                                <td>
-                                    @php
-                                        $rata = $prakerin->rata_rata ?? 0;
-                                        $colorClass = 'badge-success';
-                                        if($rata < 70) $colorClass = 'badge-danger';
-                                        elseif($rata < 80) $colorClass = 'badge-warning';
-                                    @endphp
-                                    <span class="badge {{ $colorClass }}">
-                                        {{ number_format($rata, 2) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {!! $prakerin->status_label ?? '<span class="badge badge-primary">Aktif</span>' !!}
-                                </td>
-                            </tr>
-                            @endforeach
-                            
-                            @if($recentNilai->count() > 3)
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
-                                    <i class="fas fa-ellipsis-h me-2"></i> 
-                                     data lainnya...
-                                </td>
-                            </tr>
+                            @if($tglMulai && $tglSelesai)
+                                <small>{{ $tglMulai }}</small>
+                                <br>
+                                <small class="text-muted">- {{ $tglSelesai }}</small>
+                            @else
+                                <span class="text-muted">-</span>
                             @endif
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-inbox"></i>
-                    </div>
-                    <h4>Belum ada data PKL</h4>
-                    <p>Mulai dengan menginput data PKL pertama</p>
-                    <a href="{{ route('prakerin.create') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-plus me-2"></i> Input Data PKL
-                    </a>
-                </div>
-            @endif
+                        </td>
+                        <td>
+                            @php
+                                $rata = $prakerin->rata_rata ?? 0;
+                                $colorClass = 'success';
+                                if($rata < 70) $colorClass = 'danger';
+                                elseif($rata < 80) $colorClass = 'warning';
+                            @endphp
+                            <span class="badge bg-{{ $colorClass }}">
+                                {{ number_format($rata, 2) }}
+                            </span>
+                        </td>
+                        <td>
+                            {!! $prakerin->status_label ?? '<span class="badge bg-primary">Aktif</span>' !!}
+                        </td>
+                    </tr>
+                    @endforeach
+                    
+                    @if($recentNilai->count() > 3)
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-3">
+                            <i class="fas fa-ellipsis-h me-2"></i> 
+                            dan {{ $recentNilai->count() - 3 }} data lainnya...
+                        </td>
+                    </tr>
+                    @endif
+                </tbody>
+            </table>
         </div>
+    @else
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-inbox"></i>
+            </div>
+            <h4>Belum ada data PKL</h4>
+            <p>Mulai dengan menginput data PKL pertama</p>
+            <a href="{{ route('prakerin.create') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i> Input Data PKL
+            </a>
+        </div>
+    @endif
+</div>
     </div>
     
     <!-- Bootstrap JS -->
