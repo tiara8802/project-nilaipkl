@@ -16,40 +16,19 @@ Route::middleware(['auth:guru'])->group(function () {
     Route::post('/logout', [GuruLoginController::class, 'logout'])->name('logout');
     
     // ============================================
-    // ✅ ROUTE PRAKERIN - CRUD LENGKAP
+    // ✅ ROUTE PRAKERIN - SEMUA METHOD BISA AKSES
     // ============================================
+    // HAPUS DULU SEMUA MIDDLEWARE ROLE, PAKE MANUAL DI CONTROLLER AJA
+    
     Route::resource('prakerin', PrakerinController::class);
-    
-    // ✅ Route cetak sertifikat individu
-    Route::get('prakerin/{prakerin}/cetak', [PrakerinController::class, 'cetak'])
-        ->name('prakerin.cetak');
-    
-    // ✅ Route cetak semua data (laporan)
-    Route::get('cetak-semua-prakerin', [PrakerinController::class, 'cetakSemua'])
-        ->name('prakerin.cetak.semua');
-    
-    // ✅ Route cetak sertifikat berdasarkan NIS (dari database CICWA)
-    Route::get('cetak-sertifikat/{nis}', [PrakerinController::class, 'cetakSertifikat'])
-        ->name('sertifikat.cetak');
-    
-    // ✅ Route search
-    Route::get('cari-prakerin', [PrakerinController::class, 'search'])
-        ->name('prakerin.search');
-    
-    // ✅ Route filter status
-    Route::get('filter-prakerin/{status}', [PrakerinController::class, 'filterStatus'])
-        ->name('prakerin.filter');
-    
-    // ✅ Route API / JSON
-    Route::get('api-prakerin', [PrakerinController::class, 'apiIndex'])
-        ->name('api.prakerin.index');
-    
-    Route::get('api-prakerin/{prakerin}', [PrakerinController::class, 'apiShow'])
-        ->name('api.prakerin.show');
-    
-    // ✅ Route statistics
-    Route::get('statistik-prakerin', [PrakerinController::class, 'getStatistics'])
-        ->name('prakerin.statistics');
+    Route::get('prakerin/{prakerin}/cetak', [PrakerinController::class, 'cetak'])->name('prakerin.cetak');
+    Route::get('cetak-semua-prakerin', [PrakerinController::class, 'cetakSemua'])->name('prakerin.cetak.semua');
+    Route::get('cetak-sertifikat/{nis}', [PrakerinController::class, 'cetakSertifikat'])->name('sertifikat.cetak');
+    Route::get('cari-prakerin', [PrakerinController::class, 'search'])->name('prakerin.search');
+    Route::get('filter-prakerin/{status}', [PrakerinController::class, 'filterStatus'])->name('prakerin.filter');
+    Route::get('api-prakerin', [PrakerinController::class, 'apiIndex'])->name('api.prakerin.index');
+    Route::get('api-prakerin/{prakerin}', [PrakerinController::class, 'apiShow'])->name('api.prakerin.show');
+    Route::get('statistik-prakerin', [PrakerinController::class, 'getStatistics'])->name('prakerin.statistics');
     
 });
 

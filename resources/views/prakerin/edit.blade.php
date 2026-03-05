@@ -1,12 +1,51 @@
 <!-- resources/views/prakerin/edit.blade.php -->
 @extends('layouts.app')
 
+@php
+// CEK ROLE USER YANG LOGIN
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+
+$user = Auth::guard('guru')->user();
+$isAdmin = $user->is_admin; // true = admin, false = guru
+$isGuru = !$user->is_admin;
+
+// FORMAT TANGGAL UNTUK INPUT DATE (Y-m-d)
+$tglMulai = $prakerin->tgl_mulai ? Carbon::parse($prakerin->tgl_mulai)->format('Y-m-d') : '';
+$tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->format('Y-m-d') : '';
+@endphp
+
 @section('title', 'Edit Data PKL - ' . $prakerin->nama)
 @section('page-title', 'Form Edit Data PKL')
 @section('page-description', 'Edit data siswa dan nilai sesuai dengan sertifikat PKL')
 
 @section('content')
 <div class="container-fluid px-4 py-4">
+    <!-- ROLE INFO BANNER -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert {{ $isAdmin ? 'alert-primary' : 'alert-info' }} alert-dismissible fade show shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas {{ $isAdmin ? 'fa-user-cog' : 'fa-chalkboard-teacher' }} fa-2x"></i>
+                    </div>
+                    <div>
+                        <strong>Anda login sebagai: {{ $isAdmin ? 'ADMIN SEKOLAH' : 'GURU PEMBIMBING' }}</strong>
+                        <br>
+                        <small>
+                            @if($isAdmin)
+                                ✅ Anda dapat mengedit data siswa dan melihat nilai (readonly)
+                            @else
+                                ✅ Anda hanya dapat mengedit nilai (data siswa readonly)
+                            @endif
+                        </small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Header dengan gradient navy modern -->
     <div class="row mb-5">
         <div class="col-12">
@@ -36,9 +75,15 @@
                         <span class="badge bg-white/20 backdrop-blur-sm text-white rounded-pill px-3 py-2">
                             <i class="fas fa-calculator me-1"></i> Hitung otomatis
                         </span>
-                        <span class="badge bg-white/20 backdrop-blur-sm text-white rounded-pill px-3 py-2">
-                            <i class="fas fa-lightbulb me-1"></i> Saran input
+                        @if($isGuru)
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                            <i class="fas fa-pen me-1"></i> Mode: Guru (Edit Nilai Only)
                         </span>
+                        @else
+                        <span class="badge bg-success text-white rounded-pill px-3 py-2">
+                            <i class="fas fa-database me-1"></i> Mode: Admin (Full Access)
+                        </span>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -54,14 +99,19 @@
             <div class="col-12">
                 <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
                     <!-- Card Header -->
-                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+                    <div class="card-header bg-gradient-to-r from-blue-900 to-blue-700 border-bottom border-blue-800 py-4 px-5" style="background: linear-gradient(90deg, #0f172a 0%, #1e3a8a 100%);">
                         <div class="d-flex align-items-center">
-                            <div class="p-2 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg me-3">
+                            <div class="p-2 bg-gradient-to-r from-blue-950 to-blue-800 rounded-lg me-3">
                                 <i class="fas fa-user-graduate text-white"></i>
                             </div>
                             <h2 class="h5 fw-bold text-white mb-0">
                                 Data Siswa
                             </h2>
+                            @if($isGuru)
+                            <span class="ms-3 badge bg-warning text-dark">
+                                <i class="fas fa-lock me-1"></i> Readonly untuk Guru
+                            </span>
+                            @endif
                         </div>
                     </div>
                     
@@ -78,13 +128,21 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-user"></i>
                                         </span>
-                                        <input type="text" name="nama" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
-                                               placeholder="Nama Siswa" id="nama"
+                                        <input type="text" name="nama" 
                                                value="{{ old('nama', $prakerin->nama) }}"
-                                               oninput="hideAsterisk('nama')">
+                                               {{ $isGuru ? 'readonly disabled' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
+                                               placeholder="Nama Siswa" id="nama"
+                                               oninput="hideAsterisk('nama')"
+                                               required>
                                     </div>
+                                    @if($isGuru)
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i> Data siswa hanya bisa diubah oleh Admin
+                                    </div>
+                                    @else
                                     <div class="form-text text-muted">Minimal 3 karakter</div>
+                                    @endif
                                 </div>
                             </div>
                             
@@ -98,14 +156,17 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-id-card"></i>
                                         </span>
-                                        <input type="text" name="nis" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        <input type="text" name="nis" 
+                                               value="{{ old('nis', $prakerin->nis) }}"
+                                               {{ $isGuru ? 'readonly disabled' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
                                                placeholder="12345678"
                                                id="nis"
                                                maxlength="8"
-                                               value="{{ old('nis', $prakerin->nis) }}"
-                                               oninput="hideAsterisk('nis')">
+                                               oninput="hideAsterisk('nis')"
+                                               required>
                                     </div>
+                                    @if(!$isGuru)
                                     <div class="d-flex align-items-center mt-1">
                                         <span class="small text-muted me-2">8 digit angka</span>
                                         <div id="nis-validation" class="small d-none">
@@ -114,6 +175,7 @@
                                             </span>
                                         </div>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                             
@@ -127,12 +189,14 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-calendar-alt"></i>
                                         </span>
-                                        <input type="text" name="ttl" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        <input type="text" name="ttl" 
+                                               value="{{ old('ttl', $prakerin->ttl) }}"
+                                               {{ $isGuru ? 'readonly disabled' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
                                                placeholder="Cirebon, 15 Januari 2008"
                                                id="ttl"
-                                               value="{{ old('ttl', $prakerin->ttl) }}"
-                                               oninput="hideAsterisk('ttl')">
+                                               oninput="hideAsterisk('ttl')"
+                                               required>
                                     </div>
                                 </div>
                             </div>
@@ -182,23 +246,27 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-building"></i>
                                         </span>
-                                        <input type="text" name="tempat_pkl" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        <input type="text" name="tempat_pkl" 
+                                               value="{{ old('tempat_pkl', $prakerin->tempat_pkl) }}"
+                                               {{ $isGuru ? 'readonly disabled' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
                                                placeholder="Nama Perusahaan/Instansi"
                                                id="tempat_pkl"
-                                               value="{{ old('tempat_pkl', $prakerin->tempat_pkl) }}"
-                                               oninput="cekTempatPKL(); hideAsterisk('tempat_pkl')">
+                                               oninput="if({{ $isAdmin ? 'true' : 'false' }}) cekTempatPKL(); hideAsterisk('tempat_pkl')"
+                                               required>
                                     </div>
+                                    @if($isAdmin)
                                     <div id="tempat_pkl_suggestions" class="position-absolute z-3 w-100 bg-white border border-gray-200 rounded-xl shadow-xl mt-1 p-3 d-none">
                                         <p class="small fw-medium text-blue-600 mb-2 d-flex align-items-center">
                                             <i class="fas fa-lightbulb me-2"></i> Saran Tempat PKL:
                                         </p>
                                         <div id="suggestions_list" class="d-flex flex-column gap-1"></div>
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                             
-                            <!-- Tanggal Mulai -->
+                            <!-- Tanggal Mulai - FIXED -->
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label fw-semibold text-gray-700">
@@ -208,16 +276,18 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-play-circle"></i>
                                         </span>
-                                        <input type="date" name="tgl_mulai" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        <input type="date" name="tgl_mulai" 
+                                               value="{{ old('tgl_mulai', $tglMulai) }}"
+                                               {{ $isGuru ? 'readonly disabled' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
                                                id="tgl_mulai"
-                                               value="{{ old('tgl_mulai', $prakerin->tgl_mulai) }}"
-                                               onchange="hideAsterisk('tgl_mulai')">
+                                               onchange="if({{ $isAdmin ? 'true' : 'false' }}) hideAsterisk('tgl_mulai')"
+                                               required>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Tanggal Selesai -->
+                            <!-- Tanggal Selesai - FIXED -->
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label fw-semibold text-gray-700">
@@ -227,11 +297,13 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-flag-checkered"></i>
                                         </span>
-                                        <input type="date" name="tgl_selesai" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        <input type="date" name="tgl_selesai" 
+                                               value="{{ old('tgl_selesai', $tglSelesai) }}"
+                                               {{ $isGuru ? 'readonly disabled' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
                                                id="tgl_selesai"
-                                               value="{{ old('tgl_selesai', $prakerin->tgl_selesai) }}"
-                                               onchange="hideAsterisk('tgl_selesai')">
+                                               onchange="if({{ $isAdmin ? 'true' : 'false' }}) hideAsterisk('tgl_selesai')"
+                                               required>
                                     </div>
                                 </div>
                             </div>
@@ -246,21 +318,27 @@
             <div class="col-12">
                 <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
                     <!-- Card Header -->
-                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+                    <div class="card-header bg-gradient-to-r from-blue-900 to-blue-700 border-bottom border-blue-800 py-4 px-5" style="background: linear-gradient(90deg, #0f172a 0%, #1e3a8a 100%);">
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center">
-                                <div class="p-2 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg me-3">
+                                <div class="p-2 bg-gradient-to-r from-blue-950 to-blue-800 rounded-lg me-3">
                                     <i class="fas fa-chart-bar text-white"></i>
                                 </div>
                                 <div>
                                     <h2 class="h5 fw-bold text-white mb-1">
                                         Penilaian 10 Aspek PKL (0-100)
                                     </h2>
-                                    <p class="small text-white mb-0">Edit nilai untuk setiap aspek penilaian</p>
+                                    <p class="small text-white-50 mb-0">
+                                        @if($isAdmin)
+                                            Admin: Lihat nilai (readonly)
+                                        @else
+                                            Guru: Edit nilai di sini
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span id="total-nilai-display" class="badge bg-gradient-to-r from-blue-100 to-blue-50 border border-blue-200 rounded-pill px-3 py-2 fw-bold text-blue-700">
+                                <span id="total-nilai-display" class="badge bg-blue-100 text-blue-900 rounded-pill px-3 py-2 fw-bold">
                                     {{ 
                                         $prakerin->disiplin + $prakerin->tanggung_jawab + $prakerin->inisiatif + 
                                         $prakerin->loyalitas + $prakerin->kerjasama + $prakerin->pengambilan_keputusan + 
@@ -268,7 +346,7 @@
                                         $prakerin->hasil_kerja 
                                     }}
                                 </span>
-                                <span id="rata-rata-display" class="badge bg-gradient-to-r from-green-100 to-green-50 border border-green-200 rounded-pill px-3 py-2 fw-bold text-green-700">
+                                <span id="rata-rata-display" class="badge bg-green-100 text-green-800 rounded-pill px-3 py-2 fw-bold">
                                     {{ 
                                         number_format((
                                             $prakerin->disiplin + $prakerin->tanggung_jawab + $prakerin->inisiatif + 
@@ -337,11 +415,12 @@
                                             <div class="d-flex align-items-center">
                                                 <div class="position-relative" style="width: 100px;">
                                                     <input type="number" name="{{ $aspek['name'] }}" required min="0" max="100" 
-                                                           class="form-control text-center fw-semibold nilai-input"
+                                                           class="form-control text-center fw-semibold nilai-input {{ $isAdmin ? 'bg-light' : '' }}"
                                                            style="width: 100px; height: 45px; font-size: 16px; padding-right: 35px; display: inline-block; border-radius: 10px;"
                                                            onchange="hitungTotal(); checkAllNilaiFilled()" 
                                                            value="{{ old($aspek['name'], $prakerin->{$aspek['name']}) }}" 
-                                                           id="nilai_{{ $aspek['name'] }}">
+                                                           id="nilai_{{ $aspek['name'] }}"
+                                                           {{ $isAdmin ? 'readonly' : '' }}>
                                                     <span class="position-absolute end-0 top-50 translate-middle-y me-2 text-muted small fw-bold">
                                                         /100
                                                     </span>
@@ -356,6 +435,9 @@
                                                             else echo '#dc3545';
                                                         @endphp;"></div>
                                             </div>
+                                            @if($isAdmin)
+                                            <small class="text-muted d-block mt-1">Hanya guru yang dapat mengedit nilai</small>
+                                            @endif
                                         </td>
                                         <td class="px-4 py-4">
                                             <div class="d-flex align-items-center justify-content-center">
@@ -472,9 +554,9 @@
             <div class="col-12">
                 <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
                     <!-- Card Header -->
-                    <div class="card-header bg-gradient-to-r from-blue-50 to-blue-100 border-bottom border-blue-200 py-4 px-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+                    <div class="card-header bg-gradient-to-r from-blue-900 to-blue-700 border-bottom border-blue-800 py-4 px-5" style="background: linear-gradient(90deg, #0f172a 0%, #1e3a8a 100%);">
                         <div class="d-flex align-items-center">
-                            <div class="p-2 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg me-3">
+                            <div class="p-2 bg-gradient-to-r from-blue-950 to-blue-800 rounded-lg me-3">
                                 <i class="fas fa-signature text-white"></i>
                             </div>
                             <h2 class="h5 fw-bold text-white mb-1">
@@ -486,7 +568,7 @@
                     <!-- Card Content -->
                     <div class="card-body p-5">
                         <div class="row g-4">
-                            <!-- Nama Pembimbing -->
+                            <!-- Nama Pembimbing - OTOMATIS TERISI -->
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
                                     <label class="form-label fw-semibold text-gray-700">
@@ -496,12 +578,14 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-user-tie"></i>
                                         </span>
-                                        <input type="text" name="nama_pembimbing" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        <input type="text" name="nama_pembimbing" 
+                                               value="{{ old('nama_pembimbing', $prakerin->nama_pembimbing) }}"
+                                               {{ $isGuru ? 'readonly' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light' : '' }}"
                                                placeholder="Nama Guru Pembimbing"
                                                id="nama_pembimbing"
-                                               value="{{ old('nama_pembimbing', $prakerin->nama_pembimbing) }}"
-                                               oninput="cekGuruPembimbing(); hideAsterisk('nama_pembimbing')">
+                                               oninput="cekGuruPembimbing(); hideAsterisk('nama_pembimbing')"
+                                               required>
                                     </div>
                                     <div id="guru_pembimbing_suggestions" class="position-absolute z-3 w-100 bg-white border border-gray-200 rounded-xl shadow-xl mt-1 p-3 d-none">
                                         <p class="small fw-medium text-green-600 mb-2 d-flex align-items-center">
@@ -509,6 +593,12 @@
                                         </p>
                                         <div id="guru_suggestions_list" class="d-flex flex-column gap-1"></div>
                                     </div>
+                                    @if($isGuru)
+                                    <small class="text-muted">
+                                        <i class="fas fa-check-circle text-success me-1"></i> 
+                                        Nama Anda: <strong>{{ $prakerin->nama_pembimbing }}</strong>
+                                    </small>
+                                    @endif
                                 </div>
                             </div>
                             
@@ -522,21 +612,30 @@
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-user-tie"></i>
                                         </span>
-                                        <input type="text" name="nama_pimpinan" required
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        <input type="text" name="nama_pimpinan" 
+                                               value="{{ old('nama_pimpinan', $prakerin->nama_pimpinan ?? '') }}"
+                                               {{ $isGuru ? 'readonly disabled' : '' }}
+                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
                                                placeholder="Nama Pimpinan/Direktur Perusahaan"
                                                id="nama_pimpinan"
-                                               value="{{ old('nama_pimpinan', $prakerin->nama_pimpinan ?? '') }}"
-                                               oninput="hideAsterisk('nama_pimpinan')">
+                                               oninput="if({{ $isAdmin ? 'true' : 'false' }}) hideAsterisk('nama_pimpinan')"
+                                               required>
                                     </div>
+                                    @if($isGuru)
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1 text-blue-500"></i> 
+                                        Nama pimpinan hanya bisa diisi Admin
+                                    </div>
+                                    @else
                                     <div class="form-text text-muted">
                                         <i class="fas fa-info-circle me-1 text-blue-500"></i> 
                                         Nama yang akan tercantum di sertifikat sebagai penanda tangan
                                     </div>
+                                    @endif
                                 </div>
                             </div>
                             
-                            <!-- FIX: Tanggal sertifikat otomatis update ke hari ini -->
+                            <!-- Hidden field untuk tanggal sertifikat (otomatis hari ini) -->
                             <input type="hidden" name="tanggal_sertifikat" value="{{ date('Y-m-d') }}">
                             
                             <!-- Tampilkan informasi tanggal sertifikat -->
@@ -593,12 +692,14 @@
                             
                             <!-- Action Buttons -->
                             <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-sm-auto order-1 order-sm-2">
+                                @if(!$isAdmin)
                                 <button type="button" onclick="hitungTotal(); checkAllNilaiFilled()" 
                                         class="btn btn-primary px-4 py-2 d-flex align-items-center justify-content-center"
                                         style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; border-radius: 10px;">
                                     <i class="fas fa-calculator me-2"></i>
                                     <span class="fw-semibold">Hitung Ulang</span>
                                 </button>
+                                @endif
                                 
                                 <button type="submit" 
                                         class="btn btn-success px-4 py-2 d-flex align-items-center justify-content-center"
@@ -607,12 +708,14 @@
                                     <span class="fw-semibold">Update Data PKL</span>
                                 </button>
                                 
+                                @if($isAdmin)
                                 <button type="button" onclick="showConfirmAlert('Konfirmasi Reset', 'Apakah Anda yakin ingin mengembalikan semua data ke nilai awal? Semua perubahan akan hilang.', 'warning', true)"
                                         class="btn btn-warning px-4 py-2 d-flex align-items-center justify-content-center"
                                         style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 10px;">
                                     <i class="fas fa-undo me-2"></i>
                                     <span class="fw-semibold">Reset</span>
                                 </button>
+                                @endif
                             </div>
                         </div>
                         
@@ -630,6 +733,149 @@
     </form>
 </div>
 @endsection
+
+@push('styles')
+<style>
+/* Custom Navy Blue Color Palette */
+:root {
+    --navy-50: #eff6ff;
+    --navy-100: #dbeafe;
+    --navy-200: #bfdbfe;
+    --navy-300: #93c5fd;
+    --navy-400: #60a5fa;
+    --navy-500: #3b82f6;
+    --navy-600: #2563eb;
+    --navy-700: #1d4ed8;
+    --navy-800: #1e40af;
+    --navy-900: #1e3a8a;
+    --navy-950: #172554;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #1e3a8a, #172554);
+    border-radius: 10px;
+    border: 2px solid #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #1e40af, #1e3a8a);
+}
+
+/* Modern Input Focus Effects */
+input:focus, select:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 15px 30px -10px rgba(30, 64, 175, 0.15), 0 10px 15px -5px rgba(30, 64, 175, 0.1);
+    border-color: #1e40af !important;
+}
+
+/* Disabled input style */
+input:disabled, input[readonly] {
+    background-color: #f8f9fa !important;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* Modern Card Hover Effects */
+.card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Modern Table Row Hover */
+tbody tr {
+    transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+    background: linear-gradient(90deg, rgba(30, 64, 175, 0.05), rgba(37, 99, 235, 0.05));
+}
+
+/* Modern Validation States */
+.valid-input {
+    border-color: #10b981 !important;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.05), rgba(34, 197, 94, 0.05));
+}
+
+.invalid-input {
+    border-color: #ef4444 !important;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.05), rgba(220, 38, 38, 0.05));
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .sticky-bottom {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 1rem !important;
+    }
+    
+    .container-fluid {
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+}
+
+/* Bootstrap Overrides */
+.form-control {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.25);
+}
+
+.btn {
+    border-radius: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.95rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Sticky Bottom Fix */
+.sticky-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 1020;
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -657,6 +903,10 @@ const guruPembimbingDatabase = [
     "NURHIKMAH, S.KOM.",
     "BAMBANG TRISETIADI, S.KOM.",
 ];
+
+// CEK ROLE DARI PHP
+const isAdmin = {{ $isAdmin ? 'true' : 'false' }};
+const isGuru = {{ $isGuru ? 'true' : 'false' }};
 
 // Store original values for reset
 let originalValues = {};
@@ -811,34 +1061,36 @@ function performValidationAndSubmit() {
     const formStatus = document.getElementById('form-status');
     formStatus.classList.remove('d-none');
     
-    // Validation logic
-    const nis = document.getElementById('nis').value;
-    const nisRegex = /^[0-9]{8}$/;
-    
-    if (!nisRegex.test(nis)) {
-        showModernAlert('error', 'Validasi NIS Gagal', 'NIS harus tepat 8 digit angka.');
-        resetButtonState();
-        return false;
-    }
-    
-    const nama = document.getElementById('nama').value;
-    if (nama.length < 3) {
-        showModernAlert('error', 'Validasi Nama Gagal', 'Nama harus minimal 3 karakter!');
-        resetButtonState();
-        return false;
-    }
-    
-    const tglMulai = document.getElementById('tgl_mulai').value;
-    const tglSelesai = document.getElementById('tgl_selesai').value;
-    
-    if (tglMulai && tglSelesai) {
-        const mulai = new Date(tglMulai);
-        const selesai = new Date(tglSelesai);
+    // Validation logic - NIS only for admin
+    if (isAdmin) {
+        const nis = document.getElementById('nis').value;
+        const nisRegex = /^[0-9]{8}$/;
         
-        if (selesai < mulai) {
-            showModernAlert('error', 'Validasi Tanggal Gagal', 'Tanggal selesai harus setelah tanggal mulai!');
+        if (!nisRegex.test(nis)) {
+            showModernAlert('error', 'Validasi NIS Gagal', 'NIS harus tepat 8 digit angka.');
             resetButtonState();
             return false;
+        }
+        
+        const nama = document.getElementById('nama').value;
+        if (nama.length < 3) {
+            showModernAlert('error', 'Validasi Nama Gagal', 'Nama harus minimal 3 karakter!');
+            resetButtonState();
+            return false;
+        }
+        
+        const tglMulai = document.getElementById('tgl_mulai').value;
+        const tglSelesai = document.getElementById('tgl_selesai').value;
+        
+        if (tglMulai && tglSelesai) {
+            const mulai = new Date(tglMulai);
+            const selesai = new Date(tglSelesai);
+            
+            if (selesai < mulai) {
+                showModernAlert('error', 'Validasi Tanggal Gagal', 'Tanggal selesai harus setelah tanggal mulai!');
+                resetButtonState();
+                return false;
+            }
         }
     }
     
@@ -927,8 +1179,10 @@ function resetFormData() {
     showModernAlert('success', 'Reset Berhasil', 'Semua data telah dikembalikan ke nilai awal.');
 }
 
-// Fungsi untuk cek tempat PKL
+// Fungsi untuk cek tempat PKL (HANYA UNTUK ADMIN)
 function cekTempatPKL() {
+    if (!isAdmin) return; // Hanya admin yang bisa
+    
     const input = document.getElementById('tempat_pkl');
     const suggestionsDiv = document.getElementById('tempat_pkl_suggestions');
     const suggestionsList = document.getElementById('suggestions_list');
@@ -1073,15 +1327,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.querySelectorAll('input[required]').forEach(input => {
-        input.addEventListener('blur', function() {
-            if (this.value.trim() === '') {
-                this.classList.add('invalid-input');
-                this.classList.remove('valid-input');
-            } else {
-                this.classList.add('valid-input');
-                this.classList.remove('invalid-input');
-            }
-        });
+        // Skip disabled inputs for validation
+        if (!input.disabled) {
+            input.addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    this.classList.add('invalid-input');
+                    this.classList.remove('valid-input');
+                } else {
+                    this.classList.add('valid-input');
+                    this.classList.remove('invalid-input');
+                }
+            });
+        }
     });
     
     document.addEventListener('keydown', function(e) {

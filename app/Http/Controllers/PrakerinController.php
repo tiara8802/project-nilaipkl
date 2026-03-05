@@ -7,14 +7,24 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PrakerinController extends Controller
 {
+    /**
+     * CONSTRUCTOR - KOSONGIN!
+     */
+    public function __construct()
+    {
+        // KOSONGIN!
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
+        // SEMUA BISA (admin & guru)
         $prakerins = Prakerin::orderBy('created_at', 'desc')->get();
         return view('prakerin.index', compact('prakerins'));
     }
@@ -24,6 +34,7 @@ class PrakerinController extends Controller
      */
     public function create()
     {
+        // SEMUA BISA (admin & guru)
         return view('prakerin.create');
     }
 
@@ -32,6 +43,8 @@ class PrakerinController extends Controller
      */
     public function store(Request $request)
     {
+        // SEMUA BISA (admin & guru)
+        
         // Validasi data
         $validated = $request->validate([
             // Data Siswa
@@ -144,7 +157,7 @@ class PrakerinController extends Controller
             'status' => $status,
             
             // Metadata
-            'created_by' => auth()->guard('guru')->id() ?? null,
+            'created_by' => Auth::guard('guru')->id() ?? null,
         ]);
         
         return redirect()->route('prakerin.index')
@@ -156,6 +169,7 @@ class PrakerinController extends Controller
      */
     public function show(Prakerin $prakerin)
     {
+        // SEMUA BISA (admin & guru)
         return view('prakerin.show', compact('prakerin'));
     }
 
@@ -164,6 +178,7 @@ class PrakerinController extends Controller
      */
     public function edit(Prakerin $prakerin)
     {
+        // SEMUA BISA (admin & guru)
         return view('prakerin.edit', compact('prakerin'));
     }
 
@@ -172,6 +187,8 @@ class PrakerinController extends Controller
      */
     public function update(Request $request, Prakerin $prakerin)
     {
+        // SEMUA BISA (admin & guru)
+        
         // Validasi data untuk update
         $validated = $request->validate([
             // Data Siswa
@@ -267,7 +284,7 @@ class PrakerinController extends Controller
             'catatan' => $request->catatan,
             
             // Metadata
-            'updated_by' => auth()->guard('guru')->id() ?? null,
+            'updated_by' => Auth::guard('guru')->id() ?? null,
         ]);
         
         return redirect()->route('prakerin.index')
@@ -276,24 +293,33 @@ class PrakerinController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * HANYA ADMIN YANG BISA HAPUS!
      */
     public function destroy(Prakerin $prakerin)
     {
-        // Simpan info sebelum dihapus untuk log
+        // CEK APAKAH USER ADALAH ADMIN
+        if (!Auth::guard('guru')->user()->is_admin) {
+            return redirect()->back()->with('error', 'Hanya admin yang bisa menghapus data!');
+        }
+        
+        // Simpan info sebelum dihapus untuk notifikasi
         $deletedData = [
             'no_sertifikat' => $prakerin->no_sertifikat,
             'nama' => $prakerin->nama,
             'nis' => $prakerin->nis,
         ];
         
+        // Hapus data
         $prakerin->delete();
         
+        // Redirect dengan pesan sukses
         return redirect()->route('prakerin.index')
             ->with('success', 'Data PKL ' . $deletedData['nama'] . ' (NIS: ' . $deletedData['nis'] . ') berhasil dihapus!');
     }
     
     /**
      * Cetak sertifikat individu
+     * SEMUA BISA (admin & guru)
      */
     public function cetak(Prakerin $prakerin)
     {
@@ -302,9 +328,15 @@ class PrakerinController extends Controller
     
     /**
      * Cetak semua data (laporan)
+     * HANYA ADMIN YANG BISA!
      */
     public function cetakSemua()
     {
+        // CEK APAKAH USER ADALAH ADMIN
+        if (!Auth::guard('guru')->user()->is_admin) {
+            return redirect()->back()->with('error', 'Hanya admin yang bisa mencetak semua data!');
+        }
+        
         $prakerins = Prakerin::orderBy('nama', 'asc')->get();
         
         if ($prakerins->isEmpty()) {
@@ -317,10 +349,15 @@ class PrakerinController extends Controller
     
     /**
      * 🔥 CETAK SERTIFIKAT OTOMATIS DARI CICWA PAKE NIS 🔥
-     * KONEK LANGSUNG KE DATABASE CICWA!
+     * HANYA ADMIN YANG BISA!
      */
     public function cetakSertifikat($nis)
     {
+        // CEK APAKAH USER ADALAH ADMIN
+        if (!Auth::guard('guru')->user()->is_admin) {
+            return redirect()->back()->with('error', 'Hanya admin yang bisa mencetak sertifikat dari CICWA!');
+        }
+        
         try {
             // CEK KONEKSI DATABASE CICWA
             try {
@@ -464,9 +501,18 @@ class PrakerinController extends Controller
     
     /**
      * API untuk mendapatkan data dalam format JSON
+     * HANYA ADMIN YANG BISA!
      */
     public function apiIndex()
     {
+        // CEK APAKAH USER ADALAH ADMIN
+        if (!Auth::guard('guru')->user()->is_admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin yang bisa akses API'
+            ], 403);
+        }
+        
         $prakerins = Prakerin::orderBy('created_at', 'desc')->get();
         return response()->json([
             'success' => true,
@@ -478,9 +524,18 @@ class PrakerinController extends Controller
     
     /**
      * API untuk mendapatkan data spesifik
+     * HANYA ADMIN YANG BISA!
      */
     public function apiShow(Prakerin $prakerin)
     {
+        // CEK APAKAH USER ADALAH ADMIN
+        if (!Auth::guard('guru')->user()->is_admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin yang bisa akses API'
+            ], 403);
+        }
+        
         return response()->json([
             'success' => true,
             'data' => $prakerin,
@@ -489,6 +544,7 @@ class PrakerinController extends Controller
     
     /**
      * Search functionality
+     * SEMUA BISA (admin & guru)
      */
     public function search(Request $request)
     {
@@ -506,6 +562,7 @@ class PrakerinController extends Controller
     
     /**
      * Filter berdasarkan status
+     * SEMUA BISA (admin & guru)
      */
     public function filterStatus($status)
     {
@@ -519,9 +576,18 @@ class PrakerinController extends Controller
     
     /**
      * Get statistics for dashboard
+     * HANYA ADMIN YANG BISA!
      */
     public function getStatistics()
     {
+        // CEK APAKAH USER ADALAH ADMIN
+        if (!Auth::guard('guru')->user()->is_admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin yang bisa akses statistik'
+            ], 403);
+        }
+        
         $total = Prakerin::count();
         $average = Prakerin::avg('rata_rata') ?? 0;
         $completed = Prakerin::where('status', 'selesai')->count();
