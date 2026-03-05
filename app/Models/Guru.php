@@ -36,4 +36,9 @@ class Guru extends Authenticatable
     {
         return $this->hasMany(NilaiPkl::class);
     }
+
+    public function prakerins()
+    {
+        return $this->hasMany(Prakerin::class);
+    }
 }

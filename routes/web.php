@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuruLoginController;
 use App\Http\Controllers\PrakerinController;
+use App\Http\Controllers\GuruController;
+use App\Http\Controllers\PerusahaanController;
 
 // ========== PUBLIC ROUTES ==========
 Route::get('/login', [GuruLoginController::class, 'showLoginForm'])->name('login');
@@ -30,6 +32,16 @@ Route::middleware(['auth:guru'])->group(function () {
     Route::get('api-prakerin/{prakerin}', [PrakerinController::class, 'apiShow'])->name('api.prakerin.show');
     Route::get('statistik-prakerin', [PrakerinController::class, 'getStatistics'])->name('prakerin.statistics');
     
+});
+
+
+
+Route::middleware(['role:admin'])->group(function () {
+    Route::resource('guru', GuruController::class);
+});
+
+Route::middleware(['role:admin'])->group(function () {
+    Route::resource('perusahaan', PerusahaanController::class);
 });
 
 // ========== ROOT REDIRECT ==========

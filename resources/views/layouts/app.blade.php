@@ -554,6 +554,20 @@
                             <span class="nav-text">Data PKL</span>
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('guru.index') ? 'active' : '' }}" href="{{ route('guru.index') }}">
+                            <i class="fas fa-plus-circle"></i>
+                            <span class="nav-text">Data Guru</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('perusahaan.index') ? 'active' : '' }}" href="{{ route('perusahaan.index') }}">
+                            <i class="fas fa-plus-circle"></i>
+                            <span class="nav-text">Data Perusahaan</span>
+                        </a>
+                    </li>
                     
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('prakerin.create') ? 'active' : '' }}" href="{{ route('prakerin.create') }}">
@@ -794,5 +808,6 @@
     </script>
     
     @stack('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

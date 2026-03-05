@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Prakerin;
+use App\Models\Guru;
+use App\Models\Perusahaan;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -35,135 +37,136 @@ class PrakerinController extends Controller
     public function create()
     {
         // SEMUA BISA (admin & guru)
-        return view('prakerin.create');
+        $gurus = Guru::all();
+        $perusahaans = Perusahaan::all();
+        return view('prakerin.create', compact('gurus', 'perusahaans'));
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        // SEMUA BISA (admin & guru)
+ * Store a newly created resource in storage.
+ */
+public function store(Request $request)
+{
+    // SEMUA BISA (admin & guru)
+    
+    // Validasi data
+    $validated = $request->validate([
+        // Data Siswa
+        'nama' => 'required|string|max:100|min:3',
+        'ttl' => 'required|string|max:100',
+        'nis' => 'required|string|size:8|regex:/^[0-9]+$/',
+        'keahlian' => 'required|string|max:50',
+        'lembaga' => 'required|string|max:100',
         
-        // Validasi data
-        $validated = $request->validate([
-            // Data Siswa
-            'nama' => 'required|string|max:100|min:3',
-            'ttl' => 'required|string|max:100',
-            'nis' => 'required|string|size:8|regex:/^[0-9]+$/',
-            'keahlian' => 'required|string|max:50',
-            'lembaga' => 'required|string|max:100',
-            
-            // Waktu & Tempat
-            'tgl_mulai' => 'required|date',
-            'tgl_selesai' => 'required|date|after_or_equal:tgl_mulai',
-            'tempat_pkl' => 'required|string|max:200|min:3',
-            
-            // 10 Aspek Nilai (0-100)
-            'disiplin' => 'required|integer|min:0|max:100',
-            'tanggung_jawab' => 'required|integer|min:0|max:100',
-            'inisiatif' => 'required|integer|min:0|max:100',
-            'loyalitas' => 'required|integer|min:0|max:100',
-            'kerjasama' => 'required|integer|min:0|max:100',
-            'pengambilan_keputusan' => 'required|integer|min:0|max:100',
-            'jiwa_entrepreneur' => 'required|integer|min:0|max:100',
-            'kejujuran' => 'required|integer|min:0|max:100',
-            'kemampuan_bekerja' => 'required|integer|min:0|max:100',
-            'hasil_kerja' => 'required|integer|min:0|max:100',
-            
-            // Tanda Tangan
-            'nama_pembimbing' => 'required|string|max:100|min:3',
-            'tanggal_sertifikat' => 'required|date',
-            'nama_pimpinan' => 'required|string|max:100|min:3',
-        ]);
+        // Waktu & Tempat
+        'tgl_mulai' => 'required|date',
+        'tgl_selesai' => 'required|date|after_or_equal:tgl_mulai',
+        'perusahaan_id' => 'required|exists:perusahaans,id', // <-- PASTIKAN VALIDASI INI ADA
         
-        // Generate nomor sertifikat unik
-        $no_sertifikat = 'PKL-' . date('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+        // 10 Aspek Nilai (0-100)
+        'disiplin' => 'required|integer|min:0|max:100',
+        'tanggung_jawab' => 'required|integer|min:0|max:100',
+        'inisiatif' => 'required|integer|min:0|max:100',
+        'loyalitas' => 'required|integer|min:0|max:100',
+        'kerjasama' => 'required|integer|min:0|max:100',
+        'pengambilan_keputusan' => 'required|integer|min:0|max:100',
+        'jiwa_entrepreneur' => 'required|integer|min:0|max:100',
+        'kejujuran' => 'required|integer|min:0|max:100',
+        'kemampuan_bekerja' => 'required|integer|min:0|max:100',
+        'hasil_kerja' => 'required|integer|min:0|max:100',
         
-        // Hitung total nilai
-        $nilai_aspek = [
-            $request->disiplin,
-            $request->tanggung_jawab,
-            $request->inisiatif,
-            $request->loyalitas,
-            $request->kerjasama,
-            $request->pengambilan_keputusan,
-            $request->jiwa_entrepreneur,
-            $request->kejujuran,
-            $request->kemampuan_bekerja,
-            $request->hasil_kerja
-        ];
+        // Tanda Tangan
+        'guru_id' => 'required|exists:gurus,id',
+        'tanggal_sertifikat' => 'required|date',
+        'nama_pimpinan' => 'required|string|max:100|min:3',
+    ]);
+    
+    // Generate nomor sertifikat unik
+    $no_sertifikat = 'PKL-' . date('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+    
+    // Hitung total nilai
+    $nilai_aspek = [
+        $request->disiplin,
+        $request->tanggung_jawab,
+        $request->inisiatif,
+        $request->loyalitas,
+        $request->kerjasama,
+        $request->pengambilan_keputusan,
+        $request->jiwa_entrepreneur,
+        $request->kejujuran,
+        $request->kemampuan_bekerja,
+        $request->hasil_kerja
+    ];
+    
+    $total_nilai = array_sum($nilai_aspek);
+    $rata_rata = round($total_nilai / 10, 2);
+    
+    // Tentukan predikat berdasarkan rata-rata
+    $predikat = $this->getPredikat($rata_rata);
+    
+    // Tentukan status berdasarkan predikat
+    $status = $rata_rata >= 75 ? 'selesai' : 'perbaikan';
+    
+    // Simpan data
+    $prakerin = Prakerin::create([
+        'no_sertifikat' => $no_sertifikat,
         
-        $total_nilai = array_sum($nilai_aspek);
-        $rata_rata = round($total_nilai / 10, 2);
+        // Data Siswa
+        'nama' => $request->nama,
+        'ttl' => $request->ttl,
+        'nis' => $request->nis,
+        'keahlian' => $request->keahlian,
+        'lembaga' => $request->lembaga,
         
-        // Tentukan predikat berdasarkan rata-rata
-        $predikat = $this->getPredikat($rata_rata);
+        // Waktu & Tempat
+        'tgl_mulai' => $request->tgl_mulai,
+        'tgl_selesai' => $request->tgl_selesai,
+        'perusahaan_id' => $request->perusahaan_id, // <-- TAMBAHKAN INI!
         
-        // Tentukan status berdasarkan predikat
-        $status = $rata_rata >= 75 ? 'selesai' : 'perbaikan';
+        // 10 Aspek Nilai
+        'disiplin' => $request->disiplin,
+        'tanggung_jawab' => $request->tanggung_jawab,
+        'inisiatif' => $request->inisiatif,
+        'loyalitas' => $request->loyalitas,
+        'kerjasama' => $request->kerjasama,
+        'pengambilan_keputusan' => $request->pengambilan_keputusan,
+        'jiwa_entrepreneur' => $request->jiwa_entrepreneur,
+        'kejujuran' => $request->kejujuran,
+        'kemampuan_bekerja' => $request->kemampuan_bekerja,
+        'hasil_kerja' => $request->hasil_kerja,
         
-        // Simpan data
-        $prakerin = Prakerin::create([
-            'no_sertifikat' => $no_sertifikat,
-            
-            // Data Siswa
-            'nama' => $request->nama,
-            'ttl' => $request->ttl,
-            'nis' => $request->nis,
-            'keahlian' => $request->keahlian,
-            'lembaga' => $request->lembaga,
-            
-            // Waktu & Tempat
-            'tgl_mulai' => $request->tgl_mulai,
-            'tgl_selesai' => $request->tgl_selesai,
-            'tempat_pkl' => $request->tempat_pkl,
-            
-            // 10 Aspek Nilai
-            'disiplin' => $request->disiplin,
-            'tanggung_jawab' => $request->tanggung_jawab,
-            'inisiatif' => $request->inisiatif,
-            'loyalitas' => $request->loyalitas,
-            'kerjasama' => $request->kerjasama,
-            'pengambilan_keputusan' => $request->pengambilan_keputusan,
-            'jiwa_entrepreneur' => $request->jiwa_entrepreneur,
-            'kejujuran' => $request->kejujuran,
-            'kemampuan_bekerja' => $request->kemampuan_bekerja,
-            'hasil_kerja' => $request->hasil_kerja,
-            
-            // Verifikasi (default ✓)
-            'verifikasi_disiplin' => '✓',
-            'verifikasi_tanggung_jawab' => '✓',
-            'verifikasi_inisiatif' => '✓',
-            'verifikasi_loyalitas' => '✓',
-            'verifikasi_kerjasama' => '✓',
-            'verifikasi_pengambilan_keputusan' => '✓',
-            'verifikasi_jiwa_entrepreneur' => '✓',
-            'verifikasi_kejujuran' => '✓',
-            'verifikasi_kemampuan_bekerja' => '✓',
-            'verifikasi_hasil_kerja' => '✓',
-            
-            // Total & Rata-rata
-            'total_nilai' => $total_nilai,
-            'rata_rata' => $rata_rata,
-            'predikat' => $predikat,
-            
-            // Tanda Tangan
-            'tanggal_sertifikat' => $request->tanggal_sertifikat,
-            'nama_pembimbing' => $request->nama_pembimbing,
-            'nama_pimpinan' => $request->nama_pimpinan,
-            
-            // Status
-            'status' => $status,
-            
-            // Metadata
-            'created_by' => Auth::guard('guru')->id() ?? null,
-        ]);
+        // Verifikasi (default ✓)
+        'verifikasi_disiplin' => '✓',
+        'verifikasi_tanggung_jawab' => '✓',
+        'verifikasi_inisiatif' => '✓',
+        'verifikasi_loyalitas' => '✓',
+        'verifikasi_kerjasama' => '✓',
+        'verifikasi_pengambilan_keputusan' => '✓',
+        'verifikasi_jiwa_entrepreneur' => '✓',
+        'verifikasi_kejujuran' => '✓',
+        'verifikasi_kemampuan_bekerja' => '✓',
+        'verifikasi_hasil_kerja' => '✓',
         
-        return redirect()->route('prakerin.index')
-            ->with('success', 'Data PKL berhasil disimpan! No. Sertifikat: ' . $no_sertifikat);
-    }
-
+        // Total & Rata-rata
+        'total_nilai' => $total_nilai,
+        'rata_rata' => $rata_rata,
+        'predikat' => $predikat,
+        
+        // Tanda Tangan
+        'tanggal_sertifikat' => $request->tanggal_sertifikat,
+        'guru_id' => $request->guru_id,
+        'nama_pimpinan' => $request->nama_pimpinan,
+        
+        // Status
+        'status' => $status,
+        
+        // Metadata
+        'created_by' => Auth::guard('guru')->id() ?? null,
+    ]);
+    
+    return redirect()->route('prakerin.index')
+        ->with('success', 'Data PKL berhasil disimpan! No. Sertifikat: ' . $no_sertifikat);
+}
     /**
      * Display the specified resource.
      */
@@ -179,117 +182,123 @@ class PrakerinController extends Controller
     public function edit(Prakerin $prakerin)
     {
         // SEMUA BISA (admin & guru)
-        return view('prakerin.edit', compact('prakerin'));
+    $gurus = Guru::all();
+    $perusahaans = Perusahaan::all();
+    
+    // KIRIM DATA PRAKERIN KE VIEW!
+    return view('prakerin.edit', compact('prakerin', 'gurus', 'perusahaans'));
     }
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Prakerin $prakerin)
-    {
-        // SEMUA BISA (admin & guru)
+{
+    // Validasi data untuk update
+    $validated = $request->validate([
+        // Data Siswa
+        'nama' => 'required|string|max:100|min:3',
+        'ttl' => 'required|string|max:100',
+        'nis' => 'required|string|size:8|regex:/^[0-9]+$/',
+        'keahlian' => 'required|string|max:50',
+        'lembaga' => 'required|string|max:100',
         
-        // Validasi data untuk update
-        $validated = $request->validate([
-            // Data Siswa
-            'nama' => 'required|string|max:100|min:3',
-            'ttl' => 'required|string|max:100',
-            'nis' => 'required|string|size:8|regex:/^[0-9]+$/',
-            'keahlian' => 'required|string|max:50',
-            'lembaga' => 'required|string|max:100',
-            
-            // Waktu & Tempat
-            'tgl_mulai' => 'required|date',
-            'tgl_selesai' => 'required|date|after_or_equal:tgl_mulai',
-            'tempat_pkl' => 'required|string|max:200|min:3',
-            
-            // 10 Aspek Nilai (0-100)
-            'disiplin' => 'required|integer|min:0|max:100',
-            'tanggung_jawab' => 'required|integer|min:0|max:100',
-            'inisiatif' => 'required|integer|min:0|max:100',
-            'loyalitas' => 'required|integer|min:0|max:100',
-            'kerjasama' => 'required|integer|min:0|max:100',
-            'pengambilan_keputusan' => 'required|integer|min:0|max:100',
-            'jiwa_entrepreneur' => 'required|integer|min:0|max:100',
-            'kejujuran' => 'required|integer|min:0|max:100',
-            'kemampuan_bekerja' => 'required|integer|min:0|max:100',
-            'hasil_kerja' => 'required|integer|min:0|max:100',
-            
-            // Tanda Tangan
-            'nama_pembimbing' => 'required|string|max:100|min:3',
-            'tanggal_sertifikat' => 'required|date',
-            'nama_pimpinan' => 'required|string|max:100|min:3',
-            
-            // Status
-            'status' => 'nullable|string|in:aktif,arsip,pending,selesai,perbaikan',
-            'catatan' => 'nullable|string|max:500',
-        ]);
+        // Waktu & Tempat
+        'tgl_mulai' => 'required|date',
+        'tgl_selesai' => 'required|date|after_or_equal:tgl_mulai',
+        'perusahaan_id' => 'required|integer|exists:perusahaans,id', // PERBAIKI: integer, bukan string|min
         
-        // Hitung ulang total nilai
-        $nilai_aspek = [
-            $request->disiplin,
-            $request->tanggung_jawab,
-            $request->inisiatif,
-            $request->loyalitas,
-            $request->kerjasama,
-            $request->pengambilan_keputusan,
-            $request->jiwa_entrepreneur,
-            $request->kejujuran,
-            $request->kemampuan_bekerja,
-            $request->hasil_kerja
-        ];
+        // 10 Aspek Nilai (0-100)
+        'disiplin' => 'required|integer|min:0|max:100',
+        'tanggung_jawab' => 'required|integer|min:0|max:100',
+        'inisiatif' => 'required|integer|min:0|max:100',
+        'loyalitas' => 'required|integer|min:0|max:100',
+        'kerjasama' => 'required|integer|min:0|max:100',
+        'pengambilan_keputusan' => 'required|integer|min:0|max:100',
+        'jiwa_entrepreneur' => 'required|integer|min:0|max:100',
+        'kejujuran' => 'required|integer|min:0|max:100',
+        'kemampuan_bekerja' => 'required|integer|min:0|max:100',
+        'hasil_kerja' => 'required|integer|min:0|max:100',
         
-        $total_nilai = array_sum($nilai_aspek);
-        $rata_rata = round($total_nilai / 10, 2);
-        $predikat = $this->getPredikat($rata_rata);
+        // Tanda Tangan - PERBAIKI: gunakan guru_id, bukan nama_pembimbing
+        'guru_id' => 'required|integer|exists:gurus,id',
+        'tanggal_sertifikat' => 'required|date',
+        'nama_pimpinan' => 'required|string|max:100|min:3',
         
-        // Update data
-        $prakerin->update([
-            // Data Siswa
-            'nama' => $request->nama,
-            'ttl' => $request->ttl,
-            'nis' => $request->nis,
-            'keahlian' => $request->keahlian,
-            'lembaga' => $request->lembaga,
-            
-            // Waktu & Tempat
-            'tgl_mulai' => $request->tgl_mulai,
-            'tgl_selesai' => $request->tgl_selesai,
-            'tempat_pkl' => $request->tempat_pkl,
-            
-            // 10 Aspek Nilai
-            'disiplin' => $request->disiplin,
-            'tanggung_jawab' => $request->tanggung_jawab,
-            'inisiatif' => $request->inisiatif,
-            'loyalitas' => $request->loyalitas,
-            'kerjasama' => $request->kerjasama,
-            'pengambilan_keputusan' => $request->pengambilan_keputusan,
-            'jiwa_entrepreneur' => $request->jiwa_entrepreneur,
-            'kejujuran' => $request->kejujuran,
-            'kemampuan_bekerja' => $request->kemampuan_bekerja,
-            'hasil_kerja' => $request->hasil_kerja,
-            
-            // Total & Rata-rata
-            'total_nilai' => $total_nilai,
-            'rata_rata' => $rata_rata,
-            'predikat' => $predikat,
-            
-            // Tanda Tangan
-            'tanggal_sertifikat' => $request->tanggal_sertifikat,
-            'nama_pembimbing' => $request->nama_pembimbing,
-            'nama_pimpinan' => $request->nama_pimpinan,
-            
-            // Status & Catatan
-            'status' => $request->status ?? ($rata_rata >= 75 ? 'selesai' : 'perbaikan'),
-            'catatan' => $request->catatan,
-            
-            // Metadata
-            'updated_by' => Auth::guard('guru')->id() ?? null,
-        ]);
+        // Status
+        'status' => 'nullable|string|in:aktif,arsip,pending,selesai,perbaikan',
+        'catatan' => 'nullable|string|max:500',
+    ]);
+    
+    // Ambil data guru untuk mendapatkan nama pembimbing
+    $guru = Guru::find($request->guru_id);
+    
+    // Hitung ulang total nilai
+    $nilai_aspek = [
+        $request->disiplin,
+        $request->tanggung_jawab,
+        $request->inisiatif,
+        $request->loyalitas,
+        $request->kerjasama,
+        $request->pengambilan_keputusan,
+        $request->jiwa_entrepreneur,
+        $request->kejujuran,
+        $request->kemampuan_bekerja,
+        $request->hasil_kerja
+    ];
+    
+    $total_nilai = array_sum($nilai_aspek);
+    $rata_rata = round($total_nilai / 10, 2);
+    $predikat = $this->getPredikat($rata_rata);
+    
+    // Update data
+    $prakerin->update([
+        // Data Siswa
+        'nama' => $request->nama,
+        'ttl' => $request->ttl,
+        'nis' => $request->nis,
+        'keahlian' => $request->keahlian,
+        'lembaga' => $request->lembaga,
         
-        return redirect()->route('prakerin.index')
-            ->with('success', 'Data PKL berhasil diperbarui!');
-    }
+        // Waktu & Tempat
+        'tgl_mulai' => $request->tgl_mulai,
+        'tgl_selesai' => $request->tgl_selesai,
+        'perusahaan_id' => $request->perusahaan_id,
+        
+        // 10 Aspek Nilai
+        'disiplin' => $request->disiplin,
+        'tanggung_jawab' => $request->tanggung_jawab,
+        'inisiatif' => $request->inisiatif,
+        'loyalitas' => $request->loyalitas,
+        'kerjasama' => $request->kerjasama,
+        'pengambilan_keputusan' => $request->pengambilan_keputusan,
+        'jiwa_entrepreneur' => $request->jiwa_entrepreneur,
+        'kejujuran' => $request->kejujuran,
+        'kemampuan_bekerja' => $request->kemampuan_bekerja,
+        'hasil_kerja' => $request->hasil_kerja,
+        
+        // Total & Rata-rata
+        'total_nilai' => $total_nilai,
+        'rata_rata' => $rata_rata,
+        'predikat' => $predikat,
+        
+        // Tanda Tangan - PERBAIKI: gunakan guru_id dan nama_pembimbing dari relasi
+        'tanggal_sertifikat' => $request->tanggal_sertifikat,
+        'guru_id' => $request->guru_id,
+        'nama_pembimbing' => $guru->nama, // ISI DENGAN NAMA GURU
+        'nama_pimpinan' => $request->nama_pimpinan,
+        
+        // Status
+        'status' => $request->status ?? ($rata_rata >= 75 ? 'selesai' : 'perbaikan'),
+        'catatan' => $request->catatan,
+        
+        // Metadata
+        'updated_by' => Auth::guard('guru')->id() ?? null,
+    ]);
+    
+    return redirect()->route('prakerin.index')
+        ->with('success', 'Data PKL berhasil diperbarui!');
+}
 
     /**
      * Remove the specified resource from storage.
@@ -454,7 +463,7 @@ class PrakerinController extends Controller
                 ],
                 'pkl' => [
                     'no_sertifikat' => str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT) . '/PKL/SMKN1-CBN/' . date('m') . '/' . date('Y'),
-                    'perusahaan' => strtoupper($prakerin->tempat_pkl ?? 'PT. NUSABOT TEKNOLOGI INDONESIA'),
+                    'perusahaan' => strtoupper($prakerin->perusahaan_id ?? 'PT. NUSABOT TEKNOLOGI INDONESIA'),
                     'tgl_mulai' => Carbon::parse($prakerin->tgl_mulai ?? '2025-08-01')->translatedFormat('d F Y'),
                     'tgl_selesai' => Carbon::parse($prakerin->tgl_selesai ?? '2025-10-30')->translatedFormat('d F Y'),
                     'tgl_sertifikat' => 'Cirebon, ' . Carbon::now()->translatedFormat('d F Y'),
@@ -553,7 +562,7 @@ class PrakerinController extends Controller
         $prakerins = Prakerin::where('nama', 'LIKE', "%{$search}%")
             ->orWhere('nis', 'LIKE', "%{$search}%")
             ->orWhere('no_sertifikat', 'LIKE', "%{$search}%")
-            ->orWhere('tempat_pkl', 'LIKE', "%{$search}%")
+            ->orWhere('perusahaan_id', 'LIKE', "%{$search}%")
             ->orderBy('created_at', 'desc')
             ->get();
             

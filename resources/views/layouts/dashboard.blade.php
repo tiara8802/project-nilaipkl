@@ -773,6 +773,20 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('guru.index') ? 'active' : '' }}" href="{{ route('guru.index') }}">
+                            <i class="fas fa-plus-circle"></i>
+                            <span class="nav-text">Data Guru</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('perusahaan.index') ? 'active' : '' }}" href="{{ route('perusahaan.index') }}">
+                            <i class="fas fa-plus-circle"></i>
+                            <span class="nav-text">Data Perusahaan</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('prakerin.cetak.semua') ? 'active' : '' }}" href="{{ route('prakerin.cetak.semua') }}">
                             <i class="fas fa-print"></i>
                             <span class="nav-text">Cetak Semua</span>

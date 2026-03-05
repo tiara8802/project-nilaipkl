@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('lembaga');
             
             // ===== DATA PKL =====
-            $table->string('tempat_pkl');
+            $table->foreignId('perusahaan_id')->constrained('perusahaans')->onDelete('cascade');
             $table->date('tgl_mulai');
             $table->date('tgl_selesai');
             
@@ -55,7 +55,7 @@ return new class extends Migration
             $table->integer('total_nilai')->default(0);
             $table->float('rata_rata', 8, 2)->default(0);
             $table->string('predikat')->nullable(); // ✅ TAMBAH INI!
-            $table->string('nama_pembimbing')->nullable();
+            $table->foreignId('guru_id')->constrained('gurus')->onDelete('cascade');
             $table->enum('status', ['aktif', 'arsip', 'pending', 'selesai', 'perbaikan'])->default('aktif');
             $table->text('catatan')->nullable();
             
