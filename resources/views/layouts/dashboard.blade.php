@@ -778,8 +778,6 @@
                             <span class="nav-text">Cetak Semua</span>
                         </a>
                     </li>
-                    
-                    </li> 
                 </ul>
             </div>
             
@@ -843,16 +841,6 @@
                 </div>
             </div>
             
-            <!-- <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>{{ $stats['selesai'] ?? 0 }}</h3>
-                    <p>Selesai</p>
-                </div>
-            </div> -->
-            
             <div class="stat-card">
                 <div class="stat-icon">
                     <i class="fas fa-chart-line"></i>
@@ -902,14 +890,6 @@
                 </div>
                 <h5>Cetak Sertifikat</h5>
                 <p>Cetak sertifikat PKL</p>
-            </a>
-            
-            <a href="{{ route('sertifikat.cetak', ['nis' => '2021001']) }}" class="action-btn">
-                <div class="action-icon">
-                    <i class="fas fa-file-pdf"></i>
-                </div>
-                <h5>Contoh Sertifikat</h5>
-                <p>Preview sertifikat PKL</p>
             </a>
         </div>
         
