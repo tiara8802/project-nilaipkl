@@ -26,9 +26,15 @@ class PrakerinController extends Controller
      */
     public function index()
     {
-        // SEMUA BISA (admin & guru)
-        $prakerins = Prakerin::orderBy('created_at', 'desc')->get();
-        return view('prakerin.index', compact('prakerins'));
+            // WAJIB pake with('perusahaan') biar relasi ke perusahaan ikut di-load
+    $prakerins = Prakerin::with('perusahaan') // <-- INI PENTING!
+                ->orderBy('created_at', 'desc')
+                ->get();
+    
+    return view('prakerin.index', compact('prakerins'));
+        // // SEMUA BISA (admin & guru)
+        // $prakerins = Prakerin::orderBy('created_at', 'desc')->get();
+        // return view('prakerin.index', compact('prakerins'));
     }
 
     /**
