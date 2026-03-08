@@ -15,6 +15,27 @@ $isGuru = !$user->is_admin;
 
 @section('content')
 <div class="container-fluid px-4 py-4">
+    <!-- TAMPILKAN ERROR VALIDASI -->
+@if($errors->any())
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
+                    <div>
+                        <strong>Terjadi kesalahan validasi:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+@endif
     <!-- ROLE INFO BANNER -->
     <div class="row mb-4">
         <div class="col-12">
@@ -229,36 +250,41 @@ $isGuru = !$user->is_admin;
                                 </div>
                             </div>
                             
-                            <!-- Tempat PKL -->
-                            <div class="col-md-6">
-                                <div class="form-group position-relative">
-                                    <label class="form-label fw-semibold text-gray-700">
-                                        Tempat PKL <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="position-relative">
-                                        <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
-                                            <i class="fas fa-building"></i>
-                                        </span>
-                                        <input type="text" name="tempat_pkl" 
-                                               value="{{ old('tempat_pkl') }}"
-                                               {{ $isGuru ? 'readonly disabled' : '' }}
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
-                                               placeholder="Nama Perusahaan/Instansi"
-                                               id="tempat_pkl"
-                                               oninput="if({{ $isAdmin ? 'true' : 'false' }}) cekTempatPKL(); hideAsterisk('tempat_pkl')"
-                                               required>
-                                    </div>
-                                    @if($isAdmin)
-                                    <div id="tempat_pkl_suggestions" class="position-absolute z-3 w-100 bg-white border border-gray-200 rounded-xl shadow-xl mt-1 p-3 d-none">
-                                        <p class="small fw-medium text-blue-600 mb-2 d-flex align-items-center">
-                                            <i class="fas fa-lightbulb me-2"></i> Saran Tempat PKL:
-                                        </p>
-                                        <div id="suggestions_list" class="d-flex flex-column gap-1"></div>
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-                            
+                        <!-- Tempat PKL - DROPDOWN PERUSAHAAN -->
+<div class="col-md-6">
+    <div class="form-group position-relative">
+        <label class="form-label fw-semibold text-gray-700" for="perusahaan_id">
+            Tempat PKL <span class="text-danger">*</span>
+        </label>
+        <div class="position-relative">
+            <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
+                <i class="fas fa-building"></i>
+            </span>
+            <select name="perusahaan_id" 
+                    id="perusahaan_id"
+                    class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                    {{ $isGuru ? 'disabled' : '' }}
+                    required>
+                <option value="" selected disabled>-- Pilih Perusahaan/Instansi --</option>
+                
+                @forelse($perusahaans as $perusahaan)
+                    <option value="{{ $perusahaan->id }}" 
+                        {{ old('perusahaan_id') == $perusahaan->id ? 'selected' : '' }}>
+                        {{ $perusahaan->nama }}
+                    </option>
+                @empty
+                    <option value="" disabled>Tidak ada data perusahaan</option>
+                @endforelse
+            </select>
+        </div>
+        
+        <small class="text-muted">
+            <i class="fas fa-info-circle me-1 text-blue-500"></i>
+            Pilih perusahaan dari daftar
+        </small>
+
+    </div>
+</div>
                             <!-- Tanggal Mulai -->
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -494,119 +520,115 @@ $isGuru = !$user->is_admin;
         </div>
 
         <!-- TANDA TANGAN & VALIDASI - MODERN CARD -->
-        <div class="row mb-5">
-            <div class="col-12">
-                <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
-                    <!-- Card Header dengan Biru Navy Gradasi -->
-                    <div class="card-header bg-gradient-to-r from-blue-900 to-blue-700 border-bottom border-blue-800 py-4 px-5" style="background: linear-gradient(90deg, #0f172a 0%, #1e3a8a 100%);">
-                        <div class="d-flex align-items-center">
-                            <div class="p-2 bg-gradient-to-r from-blue-950 to-blue-800 rounded-lg me-3">
-                                <i class="fas fa-signature text-white"></i>
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
+            <!-- Card Header dengan Biru Navy Gradasi -->
+            <div class="card-header bg-gradient-to-r from-blue-900 to-blue-700 border-bottom border-blue-800 py-4 px-5" style="background: linear-gradient(90deg, #0f172a 0%, #1e3a8a 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="p-2 bg-gradient-to-r from-blue-950 to-blue-800 rounded-lg me-3">
+                        <i class="fas fa-signature text-white"></i>
+                    </div>
+                    <h2 class="h5 fw-bold text-white mb-0">
+                        Tanda Tangan & Validasi
+                    </h2>
+                </div>
+            </div>
+            
+            <!-- Card Content -->
+            <div class="card-body p-5">
+                <div class="row g-4">
+                    <!-- Nama Pembimbing (Dropdown) -->
+                    <div class="col-md-6">
+                        <div class="form-group position-relative">
+                            <label class="form-label fw-semibold text-gray-700">
+                                Nama Pembimbing <span class="text-danger">*</span>
+                            </label>
+                            <div class="position-relative">
+                                <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
+                                    <i class="fas fa-user-tie"></i>
+                                </span>
+                                <select name="guru_id"
+                                        id="guru_id"
+                                        class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                        {{ $isGuru ? 'disabled' : '' }}
+                                        required>
+                                    <option value="">-- Pilih Guru Pembimbing --</option>
+                                    @foreach($gurus as $guru)
+                                        <option value="{{ $guru->id }}" 
+                                            {{ old('guru_id') == $guru->id ? 'selected' : '' }}>
+                                            {{ $guru->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
-                            <h2 class="h5 fw-bold text-white mb-0">
-                                Tanda Tangan & Validasi
-                            </h2>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1 text-blue-500"></i>
+                                @if($isGuru)
+                                    Pilih guru pembimbing (Hanya Admin yang bisa mengubah)
+                                @else
+                                    Pilih guru pembimbing dari daftar
+                                @endif
+                            </small>
                         </div>
                     </div>
                     
-                    <!-- Card Content -->
-                    <div class="card-body p-5">
-                        <div class="row g-4">
-                            <!-- Nama Pembimbing - OTOMATIS TERISI DARI USER YANG LOGIN -->
-                            <div class="col-md-6">
-                                <div class="form-group position-relative">
-                                    <label class="form-label fw-semibold text-gray-700">
-                                        Nama Pembimbing <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="position-relative">
-                                        <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
-                                            <i class="fas fa-user-tie"></i>
-                                        </span>
-                                        <input type="text" name="nama_pembimbing" 
-                                               value="{{ old('nama_pembimbing', $user->nama) }}"
-                                               {{ $isGuru ? 'readonly' : '' }}
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light' : '' }}"
-                                               placeholder="Nama Guru Pembimbing"
-                                               id="nama_pembimbing"
-                                               oninput="cekGuruPembimbing(); hideAsterisk('nama_pembimbing')"
-                                               required>
-                                    </div>
-                                    <div id="guru_pembimbing_suggestions" class="position-absolute z-3 w-100 bg-white border border-gray-200 rounded-xl shadow-xl mt-1 p-3 d-none">
-                                        <p class="small fw-medium text-blue-600 mb-2 d-flex align-items-center">
-                                            <i class="fas fa-chalkboard-teacher me-2"></i> Saran Guru Pembimbing:
-                                        </p>
-                                        <div id="guru_suggestions_list" class="d-flex flex-column gap-1"></div>
-                                    </div>
-                                    @if($isGuru)
-                                    <small class="text-muted">
-                                        <i class="fas fa-check-circle text-success me-1"></i> 
-                                        Nama Anda: <strong>{{ $user->nama }}</strong>
-                                    </small>
-                                    @else
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle me-1 text-blue-500"></i> 
-                                        Nama pembimbing (bisa diganti jika diperlukan)
-                                    </small>
-                                    @endif
-                                </div>
+                    <!-- Nama Pimpinan/Direktur -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label fw-semibold text-gray-700">
+                                Nama Pimpinan/Direktur <span class="text-danger">*</span>
+                            </label>
+                            <div class="position-relative">
+                                <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
+                                    <i class="fas fa-user-tie"></i>
+                                </span>
+                                <input type="text" name="nama_pimpinan" 
+                                       value="{{ old('nama_pimpinan') }}"
+                                       {{ $isGuru ? 'readonly disabled' : '' }}
+                                       class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
+                                       placeholder="Nama Pimpinan/Direktur Perusahaan"
+                                       id="nama_pimpinan"
+                                       oninput="if({{ $isAdmin ? 'true' : 'false' }}) hideAsterisk('nama_pimpinan')"
+                                       required>
                             </div>
-                            
-                            <!-- Nama Pimpinan/Direktur -->
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label fw-semibold text-gray-700">
-                                        Nama Pimpinan/Direktur <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="position-relative">
-                                        <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
-                                            <i class="fas fa-user-tie"></i>
-                                        </span>
-                                        <input type="text" name="nama_pimpinan" 
-                                               value="{{ old('nama_pimpinan') }}"
-                                               {{ $isGuru ? 'readonly disabled' : '' }}
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
-                                               placeholder="Nama Pimpinan/Direktur Perusahaan"
-                                               id="nama_pimpinan"
-                                               oninput="if({{ $isAdmin ? 'true' : 'false' }}) hideAsterisk('nama_pimpinan')"
-                                               required>
-                                    </div>
-                                    @if($isGuru)
-                                    <div class="form-text text-muted">
-                                        <i class="fas fa-info-circle me-1 text-blue-500"></i> 
-                                        Nama pimpinan hanya bisa diisi Admin
-                                    </div>
-                                    @else
-                                    <div class="form-text text-muted">
-                                        <i class="fas fa-info-circle me-1 text-blue-500"></i> 
-                                        Nama yang akan tercantum di sertifikat sebagai penanda tangan
-                                    </div>
-                                    @endif
-                                </div>
+                            @if($isGuru)
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1 text-blue-500"></i> 
+                                Nama pimpinan hanya bisa diisi Admin
                             </div>
-                            
-                            <!-- Hidden field untuk tanggal sertifikat (otomatis hari ini) -->
-                            <input type="hidden" name="tanggal_sertifikat" value="{{ date('Y-m-d') }}">
+                            @else
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1 text-blue-500"></i> 
+                                Nama yang akan tercantum di sertifikat sebagai penanda tangan
+                            </div>
+                            @endif
                         </div>
-                        
-                        <!-- Signature Preview -->
-                        <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-dashed border-gray-300">
-                            <div class="d-flex align-items-center">
-                                <div class="p-3 bg-white rounded-lg me-4 shadow-sm">
-                                    <i class="fas fa-stamp text-gray-400 fa-2x"></i>
-                                </div>
-                                <div>
-                                    <p class="fw-medium text-gray-800 mb-1">Validasi Digital</p>
-                                    <p class="small text-gray-600 mb-0">
-                                        Data akan divalidasi secara otomatis setelah disimpan. 
-                                        Tanggal sertifikat akan menggunakan tanggal hari ini: <strong>{{ date('d/m/Y') }}</strong>
-                                    </p>
-                                </div>
-                            </div>
+                    </div>
+                    
+                    <!-- Hidden field untuk tanggal sertifikat (otomatis hari ini) -->
+                    <input type="hidden" name="tanggal_sertifikat" value="{{ date('Y-m-d') }}">
+                </div>
+                
+                <!-- Signature Preview -->
+                <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-dashed border-gray-300">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 bg-white rounded-lg me-4 shadow-sm">
+                            <i class="fas fa-stamp text-gray-400 fa-2x"></i>
+                        </div>
+                        <div>
+                            <p class="fw-medium text-gray-800 mb-1">Validasi Digital</p>
+                            <p class="small text-gray-600 mb-0">
+                                Data akan divalidasi secara otomatis setelah disimpan. 
+                                Tanggal sertifikat akan menggunakan tanggal hari ini: <strong>{{ date('d/m/Y') }}</strong>
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
         <!-- ACTION BUTTONS -->
         <div class="row mt-4">

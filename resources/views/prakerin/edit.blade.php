@@ -21,6 +21,16 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
 
 @section('content')
 <div class="container-fluid px-4 py-4">
+    {{-- TAMPILKAN ERROR VALIDASI --}}
+@if($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
     <!-- ROLE INFO BANNER -->
     <div class="row mb-4">
         <div class="col-12">
@@ -236,37 +246,53 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
                                 </div>
                             </div>
                             
-                            <!-- Tempat PKL -->
+                            <!-- DROPDOWN PERUSAHAAN -->
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label fw-semibold text-gray-700">
+                                    <label class="form-label fw-semibold text-gray-700" for="perusahaan_id">
                                         Tempat PKL <span class="text-danger">*</span>
                                     </label>
                                     <div class="position-relative">
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-building"></i>
                                         </span>
-                                        <input type="text" name="tempat_pkl" 
-                                               value="{{ old('tempat_pkl', $prakerin->tempat_pkl) }}"
-                                               {{ $isGuru ? 'readonly disabled' : '' }}
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light text-muted' : '' }}"
-                                               placeholder="Nama Perusahaan/Instansi"
-                                               id="tempat_pkl"
-                                               oninput="if({{ $isAdmin ? 'true' : 'false' }}) cekTempatPKL(); hideAsterisk('tempat_pkl')"
-                                               required>
+                                        <select name="perusahaan_id" 
+                                                id="perusahaan_id"
+                                                class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                                {{ $isGuru ? 'disabled' : '' }}
+                                                required>
+                                            <option value="" disabled>-- Pilih Perusahaan/Instansi --</option>
+                                            
+                                            @forelse($perusahaans as $perusahaan)
+                                                <option value="{{ $perusahaan->id }}" 
+                                                    {{ old('perusahaan_id', $prakerin->perusahaan_id) == $perusahaan->id ? 'selected' : '' }}>
+                                                    {{ $perusahaan->nama }}
+                                                </option>
+                                            @empty
+                                                <option value="" disabled>Tidak ada data perusahaan</option>
+                                            @endforelse
+                                        </select>
                                     </div>
-                                    @if($isAdmin)
-                                    <div id="tempat_pkl_suggestions" class="position-absolute z-3 w-100 bg-white border border-gray-200 rounded-xl shadow-xl mt-1 p-3 d-none">
-                                        <p class="small fw-medium text-blue-600 mb-2 d-flex align-items-center">
-                                            <i class="fas fa-lightbulb me-2"></i> Saran Tempat PKL:
-                                        </p>
-                                        <div id="suggestions_list" class="d-flex flex-column gap-1"></div>
-                                    </div>
+                                    
+                                    @if($isGuru)
+                                    <small class="text-muted">
+                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                        Tempat PKL: <strong>{{ $prakerin->perusahaan->nama ?? 'Tidak diketahui' }}</strong>
+                                    </small>
+                                    @else
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1 text-blue-500"></i>
+                                        Pilih perusahaan dari daftar
+                                    </small>
                                     @endif
+
+                                    @error('perusahaan_id')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                             
-                            <!-- Tanggal Mulai - FIXED -->
+                            <!-- Tanggal Mulai -->
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label fw-semibold text-gray-700">
@@ -287,7 +313,7 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
                                 </div>
                             </div>
                             
-                            <!-- Tanggal Selesai - FIXED -->
+                            <!-- Tanggal Selesai -->
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label fw-semibold text-gray-700">
@@ -339,22 +365,10 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span id="total-nilai-display" class="badge bg-blue-100 text-blue-900 rounded-pill px-3 py-2 fw-bold">
-                                    {{ 
-                                        $prakerin->disiplin + $prakerin->tanggung_jawab + $prakerin->inisiatif + 
-                                        $prakerin->loyalitas + $prakerin->kerjasama + $prakerin->pengambilan_keputusan + 
-                                        $prakerin->jiwa_entrepreneur + $prakerin->kejujuran + $prakerin->kemampuan_bekerja + 
-                                        $prakerin->hasil_kerja 
-                                    }}
+                                    {{ $prakerin->total_nilai ?? 0 }}
                                 </span>
                                 <span id="rata-rata-display" class="badge bg-green-100 text-green-800 rounded-pill px-3 py-2 fw-bold">
-                                    {{ 
-                                        number_format((
-                                            $prakerin->disiplin + $prakerin->tanggung_jawab + $prakerin->inisiatif + 
-                                            $prakerin->loyalitas + $prakerin->kerjasama + $prakerin->pengambilan_keputusan + 
-                                            $prakerin->jiwa_entrepreneur + $prakerin->kejujuran + $prakerin->kemampuan_bekerja + 
-                                            $prakerin->hasil_kerja 
-                                        ) / 10, 2) 
-                                    }}
+                                    {{ number_format($prakerin->rata_rata ?? 0, 2) }}
                                 </span>
                             </div>
                         </div>
@@ -469,29 +483,13 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
                                                 <div class="col-6">
                                                     <div class="text-center">
                                                         <p class="small text-gray-600 mb-1">Total</p>
-                                                        <p id="total-nilai" class="h4 fw-bold text-blue-600 mb-0">
-                                                            {{ 
-                                                                $prakerin->disiplin + $prakerin->tanggung_jawab + $prakerin->inisiatif + 
-                                                                $prakerin->loyalitas + $prakerin->kerjasama + $prakerin->pengambilan_keputusan + 
-                                                                $prakerin->jiwa_entrepreneur + $prakerin->kejujuran + $prakerin->kemampuan_bekerja + 
-                                                                $prakerin->hasil_kerja 
-                                                            }}
-                                                        </p>
+                                                        <p id="total-nilai" class="h4 fw-bold text-blue-600 mb-0">{{ $prakerin->total_nilai ?? 0 }}</p>
                                                     </div>
                                                 </div>
                                                 <div class="col-6">
                                                     <div class="text-center">
                                                         <p class="small text-gray-600 mb-1">Rata-rata</p>
-                                                        <p id="rata-rata" class="h4 fw-bold text-green-600 mb-0">
-                                                            {{ 
-                                                                number_format((
-                                                                    $prakerin->disiplin + $prakerin->tanggung_jawab + $prakerin->inisiatif + 
-                                                                    $prakerin->loyalitas + $prakerin->kerjasama + $prakerin->pengambilan_keputusan + 
-                                                                    $prakerin->jiwa_entrepreneur + $prakerin->kejujuran + $prakerin->kemampuan_bekerja + 
-                                                                    $prakerin->hasil_kerja 
-                                                                ) / 10, 2) 
-                                                            }}
-                                                        </p>
+                                                        <p id="rata-rata" class="h4 fw-bold text-green-600 mb-0">{{ number_format($prakerin->rata_rata ?? 0, 2) }}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -499,22 +497,7 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
                                         <td class="px-4 py-4">
                                             <div id="predikat-container" class="text-center">
                                                 <p class="small text-gray-600 mb-1">Predikat</p>
-                                                <p id="predikat" class="h6 fw-bold text-gray-800 mb-0">
-                                                    @php
-                                                        $rataRata = (
-                                                            $prakerin->disiplin + $prakerin->tanggung_jawab + $prakerin->inisiatif + 
-                                                            $prakerin->loyalitas + $prakerin->kerjasama + $prakerin->pengambilan_keputusan + 
-                                                            $prakerin->jiwa_entrepreneur + $prakerin->kejujuran + $prakerin->kemampuan_bekerja + 
-                                                            $prakerin->hasil_kerja 
-                                                        ) / 10;
-                                                        
-                                                        if ($rataRata >= 90) echo 'SANGAT BAIK';
-                                                        elseif ($rataRata >= 80) echo 'BAIK';
-                                                        elseif ($rataRata >= 70) echo 'CUKUP';
-                                                        elseif ($rataRata >= 60) echo 'KURANG';
-                                                        else echo 'SANGAT KURANG';
-                                                    @endphp
-                                                </p>
+                                                <p id="predikat" class="h6 fw-bold text-gray-800 mb-0">{{ $prakerin->predikat ?? 'SANGAT KURANG' }}</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -549,7 +532,7 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
             </div>
         </div>
 
-        <!-- TANDA TANGAN & VALIDASI - MODERN CARD (FIXED) -->
+        <!-- TANDA TANGAN & VALIDASI - MODERN CARD -->
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card border-0 shadow-lg hover-shadow-xl transition-all duration-300" style="border-radius: 20px; overflow: hidden;">
@@ -568,37 +551,46 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
                     <!-- Card Content -->
                     <div class="card-body p-5">
                         <div class="row g-4">
-                            <!-- Nama Pembimbing - OTOMATIS TERISI -->
+                            <!-- Nama Pembimbing - DROPDOWN -->
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label fw-semibold text-gray-700">
+                                    <label class="form-label fw-semibold text-gray-700" for="guru_id">
                                         Nama Pembimbing <span class="text-danger">*</span>
                                     </label>
                                     <div class="position-relative">
                                         <span class="position-absolute start-0 top-50 translate-middle-y ms-3 text-gray-400">
                                             <i class="fas fa-user-tie"></i>
                                         </span>
-                                        <input type="text" name="nama_pembimbing" 
-                                               value="{{ old('nama_pembimbing', $prakerin->nama_pembimbing) }}"
-                                               {{ $isGuru ? 'readonly' : '' }}
-                                               class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200 {{ $isGuru ? 'bg-light' : '' }}"
-                                               placeholder="Nama Guru Pembimbing"
-                                               id="nama_pembimbing"
-                                               oninput="cekGuruPembimbing(); hideAsterisk('nama_pembimbing')"
-                                               required>
-                                    </div>
-                                    <div id="guru_pembimbing_suggestions" class="position-absolute z-3 w-100 bg-white border border-gray-200 rounded-xl shadow-xl mt-1 p-3 d-none">
-                                        <p class="small fw-medium text-green-600 mb-2 d-flex align-items-center">
-                                            <i class="fas fa-chalkboard-teacher me-2"></i> Saran Guru Pembimbing:
-                                        </p>
-                                        <div id="guru_suggestions_list" class="d-flex flex-column gap-1"></div>
+                                        <select name="guru_id"
+                                                id="guru_id"
+                                                class="form-control ps-5 py-3 border-gray-300 rounded-xl focus-ring-2 focus-ring-blue-600 focus-border-blue-500 transition-all duration-200"
+                                                {{ $isGuru ? 'disabled' : '' }}
+                                                required>
+                                            <option value="" disabled>-- Pilih Guru Pembimbing --</option>
+                                            @forelse($gurus as $guru)
+                                                <option value="{{ $guru->id }}" 
+                                                    {{ old('guru_id', $prakerin->guru_id) == $guru->id ? 'selected' : '' }}>
+                                                    {{ $guru->nama }}
+                                                </option>
+                                            @empty
+                                                <option value="" disabled>Tidak ada data guru</option>
+                                            @endforelse
+                                        </select>
                                     </div>
                                     @if($isGuru)
                                     <small class="text-muted">
                                         <i class="fas fa-check-circle text-success me-1"></i> 
-                                        Nama Anda: <strong>{{ $prakerin->nama_pembimbing }}</strong>
+                                        Pembimbing saat ini: <strong>{{ $prakerin->guru->nama ?? 'Tidak diketahui' }}</strong>
+                                    </small>
+                                    @else
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1 text-blue-500"></i>
+                                        Pilih guru pembimbing dari daftar
                                     </small>
                                     @endif
+                                    @error('guru_id')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                             
@@ -632,6 +624,9 @@ $tglSelesai = $prakerin->tgl_selesai ? Carbon::parse($prakerin->tgl_selesai)->fo
                                         Nama yang akan tercantum di sertifikat sebagai penanda tangan
                                     </div>
                                     @endif
+                                    @error('nama_pimpinan')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                             
@@ -879,31 +874,6 @@ tbody tr:hover {
 
 @push('scripts')
 <script>
-// Database tempat PKL
-const tempatPKLDatabase = [
-    "PT. NUSABOT TEKNOLOGI INDONESIA",
-    "PT. BIN ARIS CORP",
-    "CV. LOVRINZ DIGITAL",
-    "PT. KAZAH MEDIA",
-    "PT. ARKA INFORMATIKA",
-    "PT. PINTAR KAPAN SAJA",
-    "PT. ELYPHSOFT",
-    "PT. CENTRAL COMPUTER",
-    "PT. DIGITAL NUSANTARA",
-];
-
-// Database guru pembimbing     
-const guruPembimbingDatabase = [
-    "DUDUNG ZULKIPLI, S.KOM., M.M.",
-    "AGUS TRIWIDYANTO, S.T.",
-    "RIZAL MURTIYONO, S.KOM.",
-    "HERRI HERIYANTO, S.KOM.",
-    "DWI PUTRI HANDAYANI, S.PD.",
-    "AFIKA AWWALIYAH ROZZAQ, S.PD.",
-    "NURHIKMAH, S.KOM.",
-    "BAMBANG TRISETIADI, S.KOM.",
-];
-
 // CEK ROLE DARI PHP
 const isAdmin = {{ $isAdmin ? 'true' : 'false' }};
 const isGuru = {{ $isGuru ? 'true' : 'false' }};
@@ -1061,7 +1031,7 @@ function performValidationAndSubmit() {
     const formStatus = document.getElementById('form-status');
     formStatus.classList.remove('d-none');
     
-    // Validation logic - NIS only for admin
+    // Validation logic
     if (isAdmin) {
         const nis = document.getElementById('nis').value;
         const nisRegex = /^[0-9]{8}$/;
@@ -1179,94 +1149,6 @@ function resetFormData() {
     showModernAlert('success', 'Reset Berhasil', 'Semua data telah dikembalikan ke nilai awal.');
 }
 
-// Fungsi untuk cek tempat PKL (HANYA UNTUK ADMIN)
-function cekTempatPKL() {
-    if (!isAdmin) return; // Hanya admin yang bisa
-    
-    const input = document.getElementById('tempat_pkl');
-    const suggestionsDiv = document.getElementById('tempat_pkl_suggestions');
-    const suggestionsList = document.getElementById('suggestions_list');
-    
-    const value = input.value.trim().toLowerCase();
-    suggestionsList.innerHTML = '';
-    
-    if (value === '') {
-        suggestionsDiv.classList.add('d-none');
-        return;
-    }
-    
-    const matches = tempatPKLDatabase.filter(tempat => 
-        tempat.toLowerCase().includes(value)
-    ).slice(0, 5);
-    
-    if (matches.length > 0) {
-        suggestionsDiv.classList.remove('d-none');
-        
-        matches.forEach(match => {
-            const suggestionBtn = document.createElement('button');
-            suggestionBtn.type = 'button';
-            suggestionBtn.className = 'btn btn-sm bg-blue-50 hover-bg-blue-100 text-blue-700 rounded-lg mb-1 text-start d-flex align-items-center';
-            suggestionBtn.style.padding = '0.5rem 1rem';
-            suggestionBtn.innerHTML = `<i class="fas fa-building me-2 text-blue-500"></i> ${match}`;
-            suggestionBtn.onclick = function() {
-                input.value = match;
-                suggestionsDiv.classList.add('d-none');
-                hideAsterisk('tempat_pkl');
-            };
-            suggestionsList.appendChild(suggestionBtn);
-        });
-    } else {
-        suggestionsDiv.classList.remove('d-none');
-        const noMatchMsg = document.createElement('p');
-        noMatchMsg.className = 'small text-gray-600 text-center py-2 mb-0';
-        noMatchMsg.innerHTML = '<i class="fas fa-info-circle me-2 text-blue-500"></i> Lanjutkan mengetik manual';
-        suggestionsList.appendChild(noMatchMsg);
-    }
-}
-
-// Fungsi untuk cek guru pembimbing
-function cekGuruPembimbing() {
-    const input = document.getElementById('nama_pembimbing');
-    const suggestionsDiv = document.getElementById('guru_pembimbing_suggestions');
-    const suggestionsList = document.getElementById('guru_suggestions_list');
-    
-    const value = input.value.trim().toLowerCase();
-    suggestionsList.innerHTML = '';
-    
-    if (value === '') {
-        suggestionsDiv.classList.add('d-none');
-        return;
-    }
-    
-    const matches = guruPembimbingDatabase.filter(guru => 
-        guru.toLowerCase().includes(value)
-    ).slice(0, 5);
-    
-    if (matches.length > 0) {
-        suggestionsDiv.classList.remove('d-none');
-        
-        matches.forEach(match => {
-            const suggestionBtn = document.createElement('button');
-            suggestionBtn.type = 'button';
-            suggestionBtn.className = 'btn btn-sm bg-green-50 hover-bg-green-100 text-green-700 rounded-lg mb-1 text-start d-flex align-items-center';
-            suggestionBtn.style.padding = '0.5rem 1rem';
-            suggestionBtn.innerHTML = `<i class="fas fa-chalkboard-teacher me-2 text-green-500"></i> ${match}`;
-            suggestionBtn.onclick = function() {
-                input.value = match;
-                suggestionsDiv.classList.add('d-none');
-                hideAsterisk('nama_pembimbing');
-            };
-            suggestionsList.appendChild(suggestionBtn);
-        });
-    } else {
-        suggestionsDiv.classList.remove('d-none');
-        const noMatchMsg = document.createElement('p');
-        noMatchMsg.className = 'small text-gray-600 text-center py-2 mb-0';
-        noMatchMsg.innerHTML = '<i class="fas fa-info-circle me-2 text-blue-500"></i> Lanjutkan mengetik manual';
-        suggestionsList.appendChild(noMatchMsg);
-    }
-}
-
 // Fungsi untuk menyembunyikan tanda *
 function hideAsterisk(fieldId) {
     const input = document.getElementById(fieldId);
@@ -1310,22 +1192,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     hitungTotal();
     
-    document.addEventListener('click', function(event) {
-        const tempatPKLSuggestions = document.getElementById('tempat_pkl_suggestions');
-        const tempatPKLInput = document.getElementById('tempat_pkl');
-        
-        if (tempatPKLSuggestions && !tempatPKLSuggestions.contains(event.target) && event.target !== tempatPKLInput) {
-            tempatPKLSuggestions.classList.add('d-none');
-        }
-        
-        const guruSuggestions = document.getElementById('guru_pembimbing_suggestions');
-        const guruInput = document.getElementById('nama_pembimbing');
-        
-        if (guruSuggestions && !guruSuggestions.contains(event.target) && event.target !== guruInput) {
-            guruSuggestions.classList.add('d-none');
-        }
-    });
-    
     document.querySelectorAll('input[required]').forEach(input => {
         // Skip disabled inputs for validation
         if (!input.disabled) {
@@ -1349,11 +1215,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.ctrlKey && e.key === 'h') {
             e.preventDefault();
             hitungTotal();
-        }
-        if (e.key === 'Escape') {
-            document.querySelectorAll('.suggestions-div').forEach(div => {
-                div.classList.add('d-none');
-            });
         }
     });
 });

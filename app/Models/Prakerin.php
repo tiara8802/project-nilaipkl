@@ -21,7 +21,7 @@ class Prakerin extends Model
         'ttl',
         'keahlian',
         'lembaga',
-        'tempat_pkl',
+        'perusahaan_id',
         'tgl_mulai',
         'tgl_selesai',
         'disiplin',
@@ -47,7 +47,7 @@ class Prakerin extends Model
         'total_nilai',
         'rata_rata',
         'predikat',
-        'nama_pembimbing',
+        'guru_id',
         'nama_pimpinan',
         'tanggal_sertifikat',
         'status',
@@ -96,7 +96,11 @@ class Prakerin extends Model
      */
     public function guru()
     {
-        return $this->belongsTo(Guru::class, 'nama_pembimbing', 'nama');
+       return $this->belongsTo(Guru::class, 'guru_id');
+    }
+    public function perusahaan()
+    {
+       return $this->belongsTo(Perusahaan::class, 'perusahaan_id');
     }
 
     /**
@@ -204,7 +208,7 @@ class Prakerin extends Model
 
     public function getTempatPklFormattedAttribute()
     {
-        return strtoupper($this->tempat_pkl);
+        return strtoupper($this->perusahaan_id);
     }
 
     public function getStatusLabelAttribute()
@@ -265,7 +269,7 @@ class Prakerin extends Model
 
     public function setTempatPklAttribute($value)
     {
-        $this->attributes['tempat_pkl'] = strtoupper($value);
+        $this->attributes['perusahaan_id'] = strtoupper($value);
     }
 
     public function setNoSertifikatAttribute($value)

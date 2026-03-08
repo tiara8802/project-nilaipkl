@@ -94,7 +94,15 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3">{{ $prakerin->tempat_pkl }}</td>
+                                    <!-- <td class="px-4 py-3">{{ $prakerin->perusahaan->perusahaan_id }}</td> -->
+                                     <td class="px-4 py-3">
+    @if($prakerin->perusahaan)
+        <span class="fw-medium">{{ $prakerin->perusahaan->nama }}</span>
+        <small class="d-block text-muted">{{ $prakerin->perusahaan->alamat ?? '' }}</small>
+    @else
+        <span class="badge bg-warning text-dark">Belum dipilih</span>
+    @endif
+</td>
                                     <td class="px-4 py-3">
                                         <small>{{ \Carbon\Carbon::parse($prakerin->tgl_mulai)->format('d/m/Y') }}</small>
                                         <br>
